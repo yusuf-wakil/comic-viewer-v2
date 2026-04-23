@@ -3,7 +3,6 @@ import { BrowserWindow, session } from 'electron'
 const CF_INDICATORS = ['/cdn-cgi/challenge-platform/', 'Just a moment', 'Checking your browser']
 const PARTITION = 'persist:comixto'
 const BASE_URL = 'https://comix.to'
-const CLEAN_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36'
 const CHALLENGE_TIMEOUT_MS = 120_000
 const NAV_TIMEOUT_MS = 30_000
 

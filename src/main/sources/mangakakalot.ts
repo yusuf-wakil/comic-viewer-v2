@@ -4,22 +4,6 @@ import { mangakakalotBrowser } from './mangakakalot-browser'
 
 const BASE_URL = 'https://ww6.mangakakalot.tv'
 
-// Poll up to 30s for content to appear (parklogic challenge may inject HTML asynchronously)
-function waitFor(selector: string, extractor: string): string {
-  return `
-new Promise(resolve => {
-  function attempt() {
-    ${extractor}
-  }
-  if (!attempt()) {
-    let n = 0;
-    const t = setInterval(() => {
-      if (attempt() || ++n >= 60) { clearInterval(t); if (n >= 60) resolve(null); }
-    }, 500);
-  }
-})`.trim()
-}
-
 const BROWSE_SCRIPT = `
 new Promise(resolve => {
   function attempt() {
