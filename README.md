@@ -1,54 +1,38 @@
-# OpenComic V2
+# opencomic-v2
 
 [![CI](https://github.com/yusuf-wakil/comic-viewer-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/yusuf-wakil/comic-viewer-v2/actions/workflows/ci.yml)
 
 A modern desktop comic reader and library manager built with Electron, React, and TypeScript. Read local comics from your file system or browse and read from online sources — all in one app.
 
-## Features
+## Recommended IDE Setup
 
-- **Local Library** — Scan folders for CBZ, CBR, PDF, and EPUB files. View covers, metadata (series, issue number, publisher, year, genres), and pick up where you left off.
-- **Comic Reader** — Page-by-page reading with persistent progress tracking. Open multiple comics in tabs simultaneously.
-- **Online Sources** — Browse, search, and read from Comix.to, Mangakakalot, and ReadAllComics directly within the app.
-- **Persistent Storage** — Reading progress and library metadata stored in a local SQLite database.
+- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
 
-## Tech Stack
+## Project Setup
 
-| Layer | Technology |
-|---|---|
-| Desktop shell | Electron 39 |
-| UI | React 19 + TypeScript |
-| Styling | Tailwind CSS 4 |
-| State | Zustand |
-| Database | better-sqlite3 (SQLite, WAL mode) |
-| Build | electron-vite + Vite 7 |
-| Testing | Vitest + Testing Library |
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm
-
-### Install & Run
+### Install
 
 ```bash
-npm install
-npm run dev
+$ npm install
 ```
 
-This starts the Electron app with hot reload enabled.
+### Development
+
+```bash
+$ npm run dev
+```
 
 ### Build
 
 ```bash
-# Build for your current platform
-npm run build
+# For windows
+$ npm run build:win
 
-# Platform-specific builds
-npm run build:mac
-npm run build:win
-npm run build:linux
+# For macOS
+$ npm run build:mac
+
+# For Linux
+$ npm run build:linux
 ```
 
 Built artifacts are output to `out/`.
