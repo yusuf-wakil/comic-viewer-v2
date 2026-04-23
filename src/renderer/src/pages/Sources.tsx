@@ -57,7 +57,6 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
   const [openingChapter, setOpeningChapter] = useState<string | null>(null)
   const [loggingIn, setLoggingIn] = useState(false)
   const [loadingSeriesId, setLoadingSeriesId] = useState<string | null>(null)
-  const [pendingSeries, setPendingSeries] = useState<string | null>(null)
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -146,7 +145,6 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
 
   async function handleSelectSeries(seriesId: string) {
     setLoadingSeriesId(seriesId)
-    setPendingSeries(seriesId)
     setError(null)
     try {
       const detail: SeriesDetail = await invoke('sources:getSeries', { sourceId: activeSource, seriesId })
@@ -155,7 +153,6 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
       setError(String(e))
     } finally {
       setLoadingSeriesId(null)
-      setPendingSeries(null)
     }
   }
 
@@ -247,7 +244,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
         {loadingSeriesId && !selectedSeries ? (
           <div className="p-4">
             <button
-              onClick={() => { setLoadingSeriesId(null); setPendingSeries(null) }}
+              onClick={() => { setLoadingSeriesId(null) }}
               className="mb-4 text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
             >
               ← Back
