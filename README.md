@@ -1,5 +1,7 @@
 # OpenComic V2
 
+[![CI](https://github.com/yusuf-wakil/comic-viewer-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/yusuf-wakil/comic-viewer-v2/actions/workflows/ci.yml)
+
 A modern desktop comic reader and library manager built with Electron, React, and TypeScript. Read local comics from your file system or browse and read from online sources — all in one app.
 
 ## Features
@@ -113,3 +115,15 @@ The app stores data in `opencomic.db` in the user's app data directory.
 ## Adding Online Sources
 
 Online sources live in `src/main/sources/`. Each source implements the `SourceProvider` interface defined in `src/shared/types/source.ts` and is registered in `src/main/sources/index.ts`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting issues and pull requests.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of releases and changes.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
