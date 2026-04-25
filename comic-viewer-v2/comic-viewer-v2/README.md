@@ -1,1 +1,0 @@
-# comic-viewer-v2
