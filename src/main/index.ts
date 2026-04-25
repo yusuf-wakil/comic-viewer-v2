@@ -1,23 +1,10 @@
-import { app, BrowserWindow, session } from 'electron'
+import { app, BrowserWindow } from 'electron'
 import { join } from 'node:path'
 import { registerComicPageProtocol } from './protocol/comic-page'
 import { registerHandlers } from './ipc/handlers'
 import { comixBrowser } from './sources/comixto-browser'
 
 app.whenReady().then(() => {
-  // Inject Referer header for MangaPlus CDN so cover/page images load correctly
-  session.defaultSession.webRequest.onBeforeSendHeaders(
-    { urls: ['https://jumpg-assets.tokyo-cdn.com/*'] },
-    (details, callback) => {
-      callback({
-        requestHeaders: {
-          ...details.requestHeaders,
-          'Referer': 'https://mangaplus.shueisha.co.jp'
-        }
-      })
-    }
-  )
-
   registerComicPageProtocol()
   registerHandlers()
 

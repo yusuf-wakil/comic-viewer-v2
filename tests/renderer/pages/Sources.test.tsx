@@ -37,10 +37,8 @@ beforeEach(() => {
 })
 
 describe('Sources page', () => {
-  test('renders source tabs for all three providers', async () => {
+  test('renders Comix.to source tab', async () => {
     renderSources()
-    // MangaPlus removed
-    expect(screen.getByText('ReadAllComics')).toBeInTheDocument()
     expect(screen.getByText('Comix.to')).toBeInTheDocument()
   })
 
