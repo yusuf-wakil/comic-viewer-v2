@@ -4,7 +4,10 @@ import { net } from 'electron'
 import { comixBrowser } from './comixto-browser'
 
 const BASE_URL = 'https://comix.to'
-const HEADERS = { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36' }
+const HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36'
+}
 
 function posterUrl(poster: unknown): string {
   if (!poster) return ''
@@ -25,23 +28,38 @@ async function directGet<T>(path: string): Promise<T> {
 
 /** Endpoints that need CF clearance + XSRF auth (chapters list). */
 async function sessionGet<T>(path: string): Promise<T> {
-  const xsrfCookies = await comixBrowser.getSession().cookies.get({ domain: 'comix.to', name: 'XSRF-TOKEN' })
+  const xsrfCookies = await comixBrowser
+    .getSession()
+    .cookies.get({ domain: 'comix.to', name: 'XSRF-TOKEN' })
   const xsrf = xsrfCookies.length > 0 ? decodeURIComponent(xsrfCookies[0].value) : null
-  console.log('[comixto] sessionGet xsrf_present=' + !!xsrf + (xsrf ? (' len=' + xsrf.length) : ''))
-  const headers: Record<string, string> = { ...HEADERS, 'Accept': 'application/json', 'Referer': `${BASE_URL}/`, 'Origin': BASE_URL }
+  console.log('[comixto] sessionGet xsrf_present=' + !!xsrf + (xsrf ? ' len=' + xsrf.length : ''))
+  const headers: Record<string, string> = {
+    ...HEADERS,
+    Accept: 'application/json',
+    Referer: `${BASE_URL}/`,
+    Origin: BASE_URL
+  }
   if (xsrf) headers['X-XSRF-TOKEN'] = xsrf
   const resp = await comixBrowser.fetch(`${BASE_URL}${path}`, { headers })
   if (!resp.ok) throw new Error(`Comix.to API ${resp.status}: ${path}`)
-  const data = await resp.json() as T
+  const data = (await resp.json()) as T
   const s = (data as Record<string, unknown>)?.['status']
-  console.log('[comixto] sessionGet status=' + (resp.status) + ' body_status=' + s)
+  console.log('[comixto] sessionGet status=' + resp.status + ' body_status=' + s)
   return data
 }
 
 interface MangaItem {
-  hash_id?: string; id?: string; slug?: string; title: string; poster: unknown
-  last_chapter?: number | string; latest_chapter?: number | string; chapter?: number | string
-  rating?: number | string; score?: number | string; views?: number
+  hash_id?: string
+  id?: string
+  slug?: string
+  title: string
+  poster: unknown
+  last_chapter?: number | string
+  latest_chapter?: number | string
+  chapter?: number | string
+  rating?: number | string
+  score?: number | string
+  views?: number
   updated_at?: number | string
 }
 
@@ -64,7 +82,7 @@ function extractItems(data: unknown): MangaItem[] {
 const SERIES_SCRIPT = `
 (function() {
   console.log('[comixto-browser] SERIES_SCRIPT start url=' + location.href + ' cookie_len=' + document.cookie.length);
-  var idMatch = location.pathname.match(/\/manga\/([^/]+)|\/title\/([^/\-]+)/);
+  var idMatch = location.pathname.match(/\\/manga\\/([^/]+)|\\/title\\/([^/-]+)/);
   const id = idMatch ? (idMatch[1] || idMatch[2]) : '';
   console.log('[comixto-browser] extracted id=' + id + ' from ' + location.pathname);
   if (!id) return Promise.resolve([]);
@@ -156,12 +174,12 @@ const SERIES_SCRIPT = `
 
   function getXsrf() {
     if (__INJECTED_XSRF__) return __INJECTED_XSRF__;
-    var m = document.cookie.match(/(?:^|;)\s*XSRF-TOKEN=([^;]+)/);
+    var m = document.cookie.match(/(?:^|;)\\s*XSRF-TOKEN=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : null;
   }
 
   function readCookieXsrf() {
-    var m = document.cookie.match(/(?:^|;)\s*XSRF-TOKEN=([^;]+)/);
+    var m = document.cookie.match(/(?:^|;)\\s*XSRF-TOKEN=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : null;
   }
 
@@ -202,7 +220,7 @@ const SERIES_SCRIPT = `
       seen[url] = true;
       var row = a.closest('li, tr') || a;
       var text = (row.textContent || '').trim();
-      var mn = text.match(/Chapter[\s.]*(\d+(?:\.\d+)?)/) || text.match(/(\d+(?:\.\d+)?)/);
+      var mn = text.match(/Chapter[\\s.]*(\\d+(?:[.]\\d+)?)/) || text.match(/(\\d+(?:[.]\\d+)?)/);
       out.push({ url: url, hash_id: '', title: text.slice(0, 80), number: mn ? mn[1] : '', date: '' });
     });
     return out;
@@ -321,14 +339,21 @@ function dedupChapters(chapters: ChapterEntry[]): ChapterEntry[] {
   return Array.from(seen.values())
 }
 
-function deriveContentRating(detail: { is_adult?: boolean; is_mature?: boolean; content_rating?: string; age_rating?: string; type?: string; genres?: string[] }) {
+function deriveContentRating(detail: {
+  is_adult?: boolean
+  is_mature?: boolean
+  content_rating?: string
+  age_rating?: string
+  type?: string
+  genres?: string[]
+}) {
   const r = (detail.content_rating ?? detail.age_rating ?? '').toLowerCase()
   if (detail.is_adult || /adult|hentai|18\+|xxx|x-rated/i.test(r)) return 'adult' as const
-  const genres = (detail.genres ?? []).map(g => g.toLowerCase())
-  if (genres.some(g => /hentai|adult|18\+|xxx/.test(g))) return 'adult' as const
+  const genres = (detail.genres ?? []).map((g) => g.toLowerCase())
+  if (genres.some((g) => /hentai|adult|18\+|xxx/.test(g))) return 'adult' as const
   if (detail.is_mature || /mature/i.test(r)) return 'mature' as const
-  if (genres.some(g => /ecchi|smut|mature|borderline|nudity/.test(g))) return 'mature' as const
-  if (genres.some(g => /violence|gore|horror|psychological/.test(g))) return 'teen' as const
+  if (genres.some((g) => /ecchi|smut|mature|borderline|nudity/.test(g))) return 'mature' as const
+  if (genres.some((g) => /violence|gore|horror|psychological/.test(g))) return 'teen' as const
   return 'all-ages' as const
 }
 
@@ -345,39 +370,77 @@ export function createComixToProvider(fetcher: Fetcher): SourceProvider {
     id: 'comixto',
 
     async browse(page = 1, sort = 'latest'): Promise<SeriesResult[]> {
-      const apiSort = sort === 'rating' ? 'top_rating' : sort === 'popular' ? 'viewed' : sort === 'new' ? 'new' : 'latest'
+      const apiSort =
+        sort === 'rating'
+          ? 'top_rating'
+          : sort === 'popular'
+            ? 'viewed'
+            : sort === 'new'
+              ? 'new'
+              : 'latest'
       const data = await get<unknown>(`/api/v2/manga?q=&limit=20&sort=${apiSort}&page=${page}`)
       const items = extractItems(data)
-      return items.map(m => ({
-        id: m.hash_id ?? m.id ?? '',
-        title: m.title,
-        coverUrl: posterUrl(m.poster),
-        latestChapter: (m.last_chapter ?? m.latest_chapter ?? m.chapter) != null ? `Ch. ${m.last_chapter ?? m.latest_chapter ?? m.chapter}` : undefined,
-        rating: (m.rating ?? m.score) != null ? parseFloat(String(m.rating ?? m.score)) : undefined,
-      })).filter(m => m.id)
+      return items
+        .map((m) => ({
+          id: m.hash_id ?? m.id ?? '',
+          title: m.title,
+          coverUrl: posterUrl(m.poster),
+          latestChapter:
+            (m.last_chapter ?? m.latest_chapter ?? m.chapter) != null
+              ? `Ch. ${m.last_chapter ?? m.latest_chapter ?? m.chapter}`
+              : undefined,
+          rating:
+            (m.rating ?? m.score) != null ? parseFloat(String(m.rating ?? m.score)) : undefined
+        }))
+        .filter((m) => m.id)
     },
 
     async search(query: string): Promise<SeriesResult[]> {
-      const data = await get<unknown>(`/api/v2/manga?q=${encodeURIComponent(query)}&limit=100&sort=latest`)
+      const data = await get<unknown>(
+        `/api/v2/manga?q=${encodeURIComponent(query)}&limit=100&sort=latest`
+      )
       const items = extractItems(data)
-      return items.map(m => ({ id: m.hash_id ?? m.id ?? '', title: m.title, coverUrl: posterUrl(m.poster) })).filter(m => m.id)
+      return items
+        .map((m) => ({
+          id: m.hash_id ?? m.id ?? '',
+          title: m.title,
+          coverUrl: posterUrl(m.poster)
+        }))
+        .filter((m) => m.id)
     },
 
     async getSeries(id: string): Promise<SeriesDetail> {
-      interface DetailResult { result?: { title?: string; description?: string; genres?: string[]; poster?: unknown; is_adult?: boolean; is_mature?: boolean; content_rating?: string; age_rating?: string; type?: string } }
-      interface ChapterItem { chapter_id?: string; chapter_number?: string; chapter_title?: string; upload_date?: string }
+      interface DetailResult {
+        result?: {
+          title?: string
+          description?: string
+          genres?: string[]
+          poster?: unknown
+          is_adult?: boolean
+          is_mature?: boolean
+          content_rating?: string
+          age_rating?: string
+          type?: string
+        }
+      }
+      interface ChapterItem {
+        chapter_id?: string
+        chapter_number?: string
+        chapter_title?: string
+        upload_date?: string
+      }
 
       const [detailRaw, chaptersRaw] = await Promise.all([
         get<DetailResult>(`/api/v2/manga/${id}`),
-        get<{ result?: ChapterItem[] }>(`/api/v2/manga/${id}/chapter-indexes`),
+        get<{ result?: ChapterItem[] }>(`/api/v2/manga/${id}/chapter-indexes`)
       ])
       const detail = detailRaw.result ?? {}
       const chapterItems = Array.isArray(chaptersRaw.result) ? chaptersRaw.result : []
-      const chapters: ChapterEntry[] = chapterItems.map(c => ({
+      const chapters: ChapterEntry[] = chapterItems.map((c) => ({
         id: c.chapter_id ?? '',
         number: c.chapter_number ?? '',
         title: c.chapter_title ?? '',
-        date: c.upload_date ?? '',
+        date: c.upload_date ?? ''
       }))
       return {
         id,
@@ -386,21 +449,23 @@ export function createComixToProvider(fetcher: Fetcher): SourceProvider {
         description: detail.description ?? '',
         genres: detail.genres ?? [],
         chapters,
-        contentRating: deriveContentRating(detail),
+        contentRating: deriveContentRating(detail)
       }
     },
 
     async getChapterPages(chapterId: string): Promise<PageEntry[]> {
-      interface ChapterResult { result?: { images?: Array<{ url: string }> } }
+      interface ChapterResult {
+        result?: { images?: Array<{ url: string }> }
+      }
       const data = await get<ChapterResult>(`/api/v2/chapters/${chapterId}`)
-      return (data?.result?.images ?? []).map(img => ({ url: img.url }))
+      return (data?.result?.images ?? []).map((img) => ({ url: img.url }))
     },
 
     async fetchPageBuffer(url: string): Promise<Buffer> {
       const resp = await fetcher(url, { headers: { ...HEADERS, Referer: 'https://comix.to/' } })
       if (!resp.ok) throw new Error(`Comix.to image fetch failed: ${resp.status}`)
       return Buffer.from(await resp.arrayBuffer())
-    },
+    }
   }
 }
 
@@ -409,41 +474,83 @@ export const comixtoProvider: SourceProvider = {
 
   async browse(page = 1, sort = 'latest'): Promise<SeriesResult[]> {
     // Map our sort keys to Comix.to API sort values
-    const apiSort = sort === 'rating' ? 'top_rating' : sort === 'popular' ? 'viewed' : sort === 'new' ? 'new' : 'latest'
+    const apiSort =
+      sort === 'rating'
+        ? 'top_rating'
+        : sort === 'popular'
+          ? 'viewed'
+          : sort === 'new'
+            ? 'new'
+            : 'latest'
     const data = await directGet<unknown>(`/api/v2/manga?q=&limit=20&sort=${apiSort}&page=${page}`)
     const items = extractItems(data)
-    if (items.length > 0) console.log('[comixto] browse item[0] keys:', JSON.stringify(Object.keys(items[0])))
-    return items.map(m => {
-      const latestNum = m.last_chapter ?? m.latest_chapter ?? m.chapter
-      const rating = m.rating ?? m.score
-      return {
-        id: m.hash_id ?? m.id ?? '',
-        title: m.title,
-        coverUrl: posterUrl(m.poster),
-        latestChapter: latestNum != null ? `Ch. ${latestNum}` : undefined,
-        rating: rating != null ? parseFloat(String(rating)) : undefined,
-      }
-    }).filter(m => m.id)
+    if (items.length > 0)
+      console.log('[comixto] browse item[0] keys:', JSON.stringify(Object.keys(items[0])))
+    return items
+      .map((m) => {
+        const latestNum = m.last_chapter ?? m.latest_chapter ?? m.chapter
+        const rating = m.rating ?? m.score
+        return {
+          id: m.hash_id ?? m.id ?? '',
+          title: m.title,
+          coverUrl: posterUrl(m.poster),
+          latestChapter: latestNum != null ? `Ch. ${latestNum}` : undefined,
+          rating: rating != null ? parseFloat(String(rating)) : undefined
+        }
+      })
+      .filter((m) => m.id)
   },
 
   async search(query: string): Promise<SeriesResult[]> {
-    const data = await directGet<unknown>(`/api/v2/manga?keyword=${encodeURIComponent(query)}&limit=100&sort=latest`)
+    const data = await directGet<unknown>(
+      `/api/v2/manga?keyword=${encodeURIComponent(query)}&limit=100&sort=latest`
+    )
     const d = data as { items?: MangaItem[]; pagination?: unknown }
     const items = Array.isArray(d.items) ? d.items : extractItems(data)
-    return items.map(m => ({ id: m.hash_id ?? m.id ?? '', title: m.title, coverUrl: posterUrl(m.poster) })).filter(m => m.id)
+    return items
+      .map((m) => ({ id: m.hash_id ?? m.id ?? '', title: m.title, coverUrl: posterUrl(m.poster) }))
+      .filter((m) => m.id)
   },
 
   async getSeries(id: string): Promise<SeriesDetail> {
-    interface DetailResult { result?: { title?: string; description?: string; genres?: string[]; poster?: unknown; slug?: string; term_ids?: unknown[]; type?: string; is_adult?: boolean; is_mature?: boolean; age_rating?: string; content_rating?: string; status?: string } }
+    interface DetailResult {
+      result?: {
+        title?: string
+        description?: string
+        genres?: string[]
+        poster?: unknown
+        slug?: string
+        term_ids?: unknown[]
+        type?: string
+        is_adult?: boolean
+        is_mature?: boolean
+        age_rating?: string
+        content_rating?: string
+        status?: string
+      }
+    }
     interface ChapterItem {
-      hash_id?: string; id?: string; chapter?: string | number
-      title?: string; created_at?: string; date?: string
+      hash_id?: string
+      id?: string
+      chapter?: string | number
+      title?: string
+      created_at?: string
+      date?: string
     }
 
-    const detailRaw = await directGet<DetailResult>(`/api/v2/manga/${id}`).catch(() => ({ result: {} } as DetailResult))
+    const detailRaw = await directGet<DetailResult>(`/api/v2/manga/${id}`).catch(
+      () => ({ result: {} }) as DetailResult
+    )
     const detailData = detailRaw
     const detail = detailData.result ?? {}
-    console.log('[comixto] detail fields:', JSON.stringify(Object.fromEntries(Object.entries(detail).filter(([k]) => !['poster','genres'].includes(k)))))
+    console.log(
+      '[comixto] detail fields:',
+      JSON.stringify(
+        Object.fromEntries(
+          Object.entries(detail).filter(([k]) => !['poster', 'genres'].includes(k))
+        )
+      )
+    )
 
     // Chapters require auth. Try ses.fetch first (fast), then CDP intercept as fallback.
     // CDP navigates the hidden window to the manga page and captures the page's own
@@ -465,11 +572,21 @@ export const comixtoProvider: SourceProvider = {
           // Auth check: account/info works without XSRF, so it reliably detects login state
           const acctResp = await comixBrowser.fetch(`${BASE_URL}/api/v2/account/info`)
           const acctText = await acctResp.text()
-          console.log('[comixto] account/info http=' + acctResp.status + ' body=' + acctText.slice(0, 600))
+          console.log(
+            '[comixto] account/info http=' + acctResp.status + ' body=' + acctText.slice(0, 600)
+          )
           let acctData: { status?: number } = {}
-          try { acctData = JSON.parse(acctText) } catch { acctData = {} }
+          try {
+            acctData = JSON.parse(acctText)
+          } catch {
+            acctData = {}
+          }
           if (acctData.status !== 200) {
-            console.log('[comixto] not logged in (account/info status=' + acctData.status + '), showing login prompt')
+            console.log(
+              '[comixto] not logged in (account/info status=' +
+                acctData.status +
+                '), showing login prompt'
+            )
             loginRequired = true
           } else {
             authed = true
@@ -484,9 +601,13 @@ export const comixtoProvider: SourceProvider = {
           // 1. Try CDP capture: let the page's own JS make the chapters call natively
           console.log('[comixto] trying CDP capture (native page request)')
           interface ChapterItem2 {
-            hash_id?: string; id?: string; chapter_id?: number
-            chapter?: string | number; number?: number
-            title?: string; name?: string
+            hash_id?: string
+            id?: string
+            chapter_id?: number
+            chapter?: string | number
+            number?: number
+            title?: string
+            name?: string
             created_at?: string | number
           }
           const detailSlug = (detail as { slug?: string }).slug
@@ -497,26 +618,46 @@ export const comixtoProvider: SourceProvider = {
             let capturedItems: ChapterItem2[] = []
             if (cd.result && typeof cd.result === 'object') {
               const r = cd.result as { items?: unknown[] }
-              if (Array.isArray(r.items) && r.items.length > 0) capturedItems = r.items as ChapterItem2[]
+              if (Array.isArray(r.items) && r.items.length > 0)
+                capturedItems = r.items as ChapterItem2[]
             }
-            if (!capturedItems.length && Array.isArray(cd.result) && (cd.result as unknown[]).length > 0) capturedItems = cd.result as ChapterItem2[]
-            if (!capturedItems.length && Array.isArray(cd.items) && (cd.items as unknown[]).length > 0) capturedItems = cd.items as ChapterItem2[]
+            if (
+              !capturedItems.length &&
+              Array.isArray(cd.result) &&
+              (cd.result as unknown[]).length > 0
+            )
+              capturedItems = cd.result as ChapterItem2[]
+            if (
+              !capturedItems.length &&
+              Array.isArray(cd.items) &&
+              (cd.items as unknown[]).length > 0
+            )
+              capturedItems = cd.items as ChapterItem2[]
             if (capturedItems.length > 0) {
               console.log('[comixto] CDP captured', capturedItems.length, 'chapters')
-              chapters = capturedItems.map(c => {
+              chapters = capturedItems.map((c) => {
                 const num = c.number ?? (typeof c.chapter === 'number' ? c.chapter : undefined)
                 const chapId = c.chapter_id ?? c.id ?? c.hash_id ?? ''
                 return {
                   id: `${BASE_URL}/title/${mangaSlug}/${chapId}-chapter-${num ?? ''}`,
                   number: String(num ?? c.chapter ?? ''),
                   title: cleanTitle(c.title),
-                  date: typeof c.created_at === 'number'
-                    ? new Date(c.created_at * 1000).toISOString().slice(0, 10)
-                    : String(c.created_at ?? '').slice(0, 10)
+                  date:
+                    typeof c.created_at === 'number'
+                      ? new Date(c.created_at * 1000).toISOString().slice(0, 10)
+                      : String(c.created_at ?? '').slice(0, 10)
                 }
               })
               chapters = dedupChapters(chapters)
-              return { id, title: detail.title ?? '', coverUrl: posterUrl(detail.poster), description: detail.description ?? '', genres: detail.genres ?? [], chapters, contentRating: deriveContentRating(detail) }
+              return {
+                id,
+                title: detail.title ?? '',
+                coverUrl: posterUrl(detail.poster),
+                description: detail.description ?? '',
+                genres: detail.genres ?? [],
+                chapters,
+                contentRating: deriveContentRating(detail)
+              }
             }
           }
           // 2. Fall back to in-browser XSRF fetch + DOM scraping
@@ -544,7 +685,7 @@ export const comixtoProvider: SourceProvider = {
 
       const sessionSlug = (detail as { slug?: string }).slug
       const sessionMangaSlug = sessionSlug ? `${id}-${sessionSlug}` : id
-      chapters = items.map(c => {
+      chapters = items.map((c) => {
         const raw = c as unknown as { chapter_id?: number; number?: number }
         const chapId = raw.chapter_id ?? c.hash_id ?? c.id ?? ''
         const num = raw.number ?? c.chapter ?? ''
@@ -552,9 +693,10 @@ export const comixtoProvider: SourceProvider = {
           id: `${BASE_URL}/title/${sessionMangaSlug}/${chapId}-chapter-${num}`,
           number: String(num),
           title: c.title ?? '',
-          date: typeof c.created_at === 'number'
-            ? new Date(c.created_at * 1000).toISOString().slice(0, 10)
-            : String(c.created_at ?? c.date ?? '').slice(0, 10)
+          date:
+            typeof c.created_at === 'number'
+              ? new Date(c.created_at * 1000).toISOString().slice(0, 10)
+              : String(c.created_at ?? c.date ?? '').slice(0, 10)
         }
       })
     } catch (e) {
@@ -582,28 +724,46 @@ export const comixtoProvider: SourceProvider = {
 
     // Diagnostic: check HTTP status of chapter URL before navigating
     try {
-      const probe = await comixBrowser.fetch(url, { method: 'GET', headers: { Accept: 'text/html' } })
+      const probe = await comixBrowser.fetch(url, {
+        method: 'GET',
+        headers: { Accept: 'text/html' }
+      })
       const html = await probe.text()
       console.log('[comixto] chapter url status:', probe.status, 'body len:', html.length)
       // Try to extract image URLs from Next.js RSC flight data inline scripts
       // Next.js 13+ uses: (self.__next_f=self.__next_f||[]).push([1,"payload"])
       // Scan entire HTML for CDN image URLs (covers RSC payload, inline scripts, etc.)
-      const allHtmlUrls = [...html.matchAll(/https?:\/\/[^"'\s\\<>]+\.(?:webp|jpg|jpeg|png|gif)[^"'\s\\<>]*/gi)]
-        .map(m => m[0])
-      const htmlImageUrls = [...new Set(allHtmlUrls)].filter(u => !/(favicon|logo|icon|poster|static\.comix|gravatar|_next|\.css|\.js)/i.test(u))
+      const allHtmlUrls = [
+        ...html.matchAll(/https?:\/\/[^"'\s\\<>]+\.(?:webp|jpg|jpeg|png|gif)[^"'\s\\<>]*/gi)
+      ].map((m) => m[0])
+      const htmlImageUrls = [...new Set(allHtmlUrls)].filter(
+        (u) => !/(favicon|logo|icon|poster|static\.comix|gravatar|_next|\.css|\.js)/i.test(u)
+      )
       if (htmlImageUrls.length > 0) {
-        console.log('[comixto] chapter HTML scan images:', htmlImageUrls.length, 'first:', htmlImageUrls[0])
-        return htmlImageUrls.map(u => ({ url: u }))
+        console.log(
+          '[comixto] chapter HTML scan images:',
+          htmlImageUrls.length,
+          'first:',
+          htmlImageUrls[0]
+        )
+        return htmlImageUrls.map((u) => ({ url: u }))
       }
       // Also check any inline script JSON for image arrays
       const scriptMatches = [...html.matchAll(/<script[^>]*>([\s\S]{0,3000}?)<\/script>/gi)]
       for (const m of scriptMatches) {
         const urls = m[1].match(/https?:\/\/[^"'\s]+\.(?:webp|jpg|jpeg|png|gif)[^"'\s]*/gi)
         if (urls && urls.length >= 2) {
-          const unique = [...new Set(urls)].filter(u => !/favicon|logo|icon|poster|static\.comix/i.test(u))
+          const unique = [...new Set(urls)].filter(
+            (u) => !/favicon|logo|icon|poster|static\.comix/i.test(u)
+          )
           if (unique.length >= 2) {
-            console.log('[comixto] chapter inline script images:', unique.length, 'first:', unique[0])
-            return unique.map(u => ({ url: u }))
+            console.log(
+              '[comixto] chapter inline script images:',
+              unique.length,
+              'first:',
+              unique[0]
+            )
+            return unique.map((u) => ({ url: u }))
           }
         }
       }
@@ -636,7 +796,9 @@ export const comixtoProvider: SourceProvider = {
         }
         const pageArr = data?.result?.pages ?? data?.result?.data ?? data?.pages ?? data?.data ?? []
         const structured = pageArr
-          .map((p: { url?: string; image?: string; src?: string }) => p.url ?? p.image ?? p.src ?? '')
+          .map(
+            (p: { url?: string; image?: string; src?: string }) => p.url ?? p.image ?? p.src ?? ''
+          )
           .filter((u: string) => u.startsWith('http'))
         if (structured.length > 0) {
           console.log('[comixto] CDP found', structured.length, 'chapter pages (structured)')
@@ -647,14 +809,16 @@ export const comixtoProvider: SourceProvider = {
           console.log('[comixto] CDP found', imageArr.length, 'chapter pages (image array)')
           return imageArr.map((u: string) => ({ url: u }))
         }
-      } catch { /* fall through to regex extraction */ }
+      } catch {
+        /* fall through to regex extraction */
+      }
 
       // Regex extract image URLs directly from the raw body
       const matches = body.match(/https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp|gif)[^"'\s]*/gi)
       if (matches && matches.length > 0) {
         const unique = [...new Set(matches)]
         console.log('[comixto] CDP found', unique.length, 'chapter pages (regex)')
-        return unique.map(u => ({ url: u }))
+        return unique.map((u) => ({ url: u }))
       }
     } catch (e) {
       console.log('[comixto] chapter CDP failed:', String(e))
@@ -663,11 +827,13 @@ export const comixtoProvider: SourceProvider = {
     // Strategy 2: run JS in the page to extract images from __NEXT_DATA__ / DOM
     const urls = await comixBrowser.navigateAndRun<string[]>(url, CHAPTER_SCRIPT)
     if (urls.length === 0) throw new Error('No pages found for this chapter (comix.to)')
-    return urls.map(u => ({ url: u }))
+    return urls.map((u) => ({ url: u }))
   },
 
   async fetchPageBuffer(url: string): Promise<Buffer> {
-    const resp = await comixBrowser.fetch(url, { headers: { ...HEADERS, Referer: 'https://comix.to/' } })
+    const resp = await comixBrowser.fetch(url, {
+      headers: { ...HEADERS, Referer: 'https://comix.to/' }
+    })
     if (!resp.ok) throw new Error(`Comix.to image fetch failed: ${resp.status} for ${url}`)
     return Buffer.from(await resp.arrayBuffer())
   }
@@ -681,20 +847,33 @@ async function scrapeChapters(id: string, slug?: string): Promise<ChapterEntry[]
     const html = await pageResp.text()
     const hasNextData = html.includes('__NEXT_DATA__')
     const hasChapterLinks = html.includes('/chapter/')
-    console.log(`[comixto] HTML fetch: ${html.length} chars, __NEXT_DATA__=${hasNextData}, /chapter/=${hasChapterLinks}`)
-    if (!hasNextData) console.log('[comixto] HTML no __NEXT_DATA__, page start:', html.slice(0, 300).replace(/\s+/g, ' '))
+    console.log(
+      `[comixto] HTML fetch: ${html.length} chars, __NEXT_DATA__=${hasNextData}, /chapter/=${hasChapterLinks}`
+    )
+    if (!hasNextData)
+      console.log(
+        '[comixto] HTML no __NEXT_DATA__, page start:',
+        html.slice(0, 300).replace(/\s+/g, ' ')
+      )
 
     if (hasNextData) {
       const ndMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/)
       if (ndMatch) {
         const data = JSON.parse(ndMatch[1]) as { props?: { pageProps?: Record<string, unknown> } }
         const pp = data?.props?.pageProps ?? {}
-        console.log('[comixto] __NEXT_DATA__ pageProps keys:', JSON.stringify(Object.keys(pp).slice(0, 20)))
+        console.log(
+          '[comixto] __NEXT_DATA__ pageProps keys:',
+          JSON.stringify(Object.keys(pp).slice(0, 20))
+        )
 
         function isChapterItem(item: unknown): boolean {
           if (!item || typeof item !== 'object') return false
           const c = item as Record<string, unknown>
-          return c['hash_id'] !== undefined || c['chapter'] !== undefined || c['chapter_number'] !== undefined
+          return (
+            c['hash_id'] !== undefined ||
+            c['chapter'] !== undefined ||
+            c['chapter_number'] !== undefined
+          )
         }
 
         function mapChapters(arr: Array<Record<string, unknown>>) {
@@ -702,13 +881,18 @@ async function scrapeChapters(id: string, slug?: string): Promise<ChapterEntry[]
             id: `${BASE_URL}/chapter/${c['hash_id'] ?? c['id'] ?? c['chapter_id'] ?? ''}`,
             number: String(c['chapter'] ?? c['chapter_number'] ?? c['number'] ?? i + 1),
             title: cleanTitle(String(c['title'] ?? '')),
-            date: typeof c['created_at'] === 'number'
-              ? new Date((c['created_at'] as number) * 1000).toISOString().slice(0, 10)
-              : String(c['created_at'] ?? c['date'] ?? '').slice(0, 10)
+            date:
+              typeof c['created_at'] === 'number'
+                ? new Date((c['created_at'] as number) * 1000).toISOString().slice(0, 10)
+                : String(c['created_at'] ?? c['date'] ?? '').slice(0, 10)
           }))
         }
 
-        function findChaptersIn(obj: unknown, path: string, depth: number): Array<Record<string, unknown>> | null {
+        function findChaptersIn(
+          obj: unknown,
+          path: string,
+          depth: number
+        ): Array<Record<string, unknown>> | null {
           if (depth > 10 || !obj || typeof obj !== 'object') return null
           if (Array.isArray(obj)) {
             if (obj.length > 0 && isChapterItem(obj[0])) {
@@ -723,14 +907,20 @@ async function scrapeChapters(id: string, slug?: string): Promise<ChapterEntry[]
           }
           const o = obj as Record<string, unknown>
           if (o['dehydratedState']) {
-            type DQItem = { state?: { data?: { result?: { items?: unknown[] }; items?: unknown[] } } }
+            type DQItem = {
+              state?: { data?: { result?: { items?: unknown[] }; items?: unknown[] } }
+            }
             const dh = o['dehydratedState'] as { queries?: DQItem[] }
             if (Array.isArray(dh.queries)) {
               for (const q of dh.queries) {
                 const qd = q?.state?.data
-                const qitems = (qd?.result && Array.isArray(qd.result.items) ? qd.result.items : null) ?? (qd?.items && Array.isArray(qd.items) ? qd.items : null)
+                const qitems =
+                  (qd?.result && Array.isArray(qd.result.items) ? qd.result.items : null) ??
+                  (qd?.items && Array.isArray(qd.items) ? qd.items : null)
                 if (qitems && qitems.length > 0 && isChapterItem(qitems[0])) {
-                  console.log(`[comixto] HTML __NEXT_DATA__ chapters in dehydratedState count=${qitems.length}`)
+                  console.log(
+                    `[comixto] HTML __NEXT_DATA__ chapters in dehydratedState count=${qitems.length}`
+                  )
                   return qitems as Array<Record<string, unknown>>
                 }
               }
@@ -750,12 +940,19 @@ async function scrapeChapters(id: string, slug?: string): Promise<ChapterEntry[]
     }
     if (hasChapterLinks) {
       // Match new URL format: /title/{manga-slug}/{chapter_id}-chapter-{number}
-      const links = [...html.matchAll(/href="(https?:\/\/comix\.to\/title\/[^"]+\/(\d+)-chapter-([^"]+))"/g)]
+      const links = [
+        ...html.matchAll(/href="(https?:\/\/comix\.to\/title\/[^"]+\/(\d+)-chapter-([^"]+))"/g)
+      ]
       if (links.length > 0) {
         console.log(`[comixto] found ${links.length} chapter links in HTML`)
         const seen = new Set<string>()
         return links
-          .filter(m => { const key = m[2]; if (seen.has(key)) return false; seen.add(key); return true })
+          .filter((m) => {
+            const key = m[2]
+            if (seen.has(key)) return false
+            seen.add(key)
+            return true
+          })
           .map((m, i) => ({ id: m[1], number: m[3] || String(i + 1), title: '', date: '' }))
       }
     }
@@ -764,7 +961,13 @@ async function scrapeChapters(id: string, slug?: string): Promise<ChapterEntry[]
   }
 
   // Second try: run JS in the hidden window (in-browser fetch with injected XSRF)
-  type ScrapedChapter = { url: string; hash_id: string; title: string; number: string; date: string }
+  type ScrapedChapter = {
+    url: string
+    hash_id: string
+    title: string
+    number: string
+    date: string
+  }
   const scraped = await comixBrowser.navigateAndRunWithXsrf<ScrapedChapter[]>(
     `${BASE_URL}/title/${titlePath}`,
     SERIES_SCRIPT,
@@ -772,9 +975,10 @@ async function scrapeChapters(id: string, slug?: string): Promise<ChapterEntry[]
   )
   console.log('[comixto] scrapeChapters in-browser result:', scraped.length)
   return scraped.map((c, i) => ({
-    id: c.hash_id && (c.number || i)
-      ? `${BASE_URL}/title/${titlePath}/${c.hash_id}-chapter-${c.number || String(i + 1)}`
-      : c.url || `${BASE_URL}/title/${titlePath}`,
+    id:
+      c.hash_id && (c.number || i)
+        ? `${BASE_URL}/title/${titlePath}/${c.hash_id}-chapter-${c.number || String(i + 1)}`
+        : c.url || `${BASE_URL}/title/${titlePath}`,
     number: c.number || String(i + 1),
     title: cleanTitle(c.title),
     date: c.date || ''

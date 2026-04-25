@@ -10,7 +10,15 @@ interface Props {
   onPageChange: (page: number) => void
 }
 
-export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClose, onPageChange }: Props) {
+export function ReaderView({
+  pageUrls,
+  currentPage,
+  title,
+  onNext,
+  onPrev,
+  onClose,
+  onPageChange
+}: Props) {
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
@@ -18,16 +26,21 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
   const containerRef = useRef<HTMLDivElement>(null)
 
   // Reset zoom/pan when navigating pages
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     setZoom(1)
     setPan({ x: 0, y: 0 })
   }, [currentPage])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') onNext()
-    else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') onPrev()
-    else if (e.key === 'Escape') onClose()
-  }, [onNext, onPrev, onClose])
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') onNext()
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') onPrev()
+      else if (e.key === 'Escape') onClose()
+    },
+    [onNext, onPrev, onClose]
+  )
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -41,7 +54,7 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault()
     const factor = e.deltaY < 0 ? 1.15 : 0.87
-    setZoom(z => {
+    setZoom((z) => {
       const next = Math.max(1, Math.min(5, z * factor))
       if (next === 1) setPan({ x: 0, y: 0 })
       return next
@@ -55,18 +68,24 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
     return () => el.removeEventListener('wheel', handleWheel)
   }, [handleWheel])
 
-  const handleMouseDown = useCallback((e: React.MouseEvent) => {
-    if (zoom <= 1) return
-    e.preventDefault()
-    setDragging(true)
-    dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y }
-  }, [zoom, pan])
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (zoom <= 1) return
+      e.preventDefault()
+      setDragging(true)
+      dragRef.current = { startX: e.clientX, startY: e.clientY, panX: pan.x, panY: pan.y }
+    },
+    [zoom, pan]
+  )
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging) return
-    const { startX, startY, panX, panY } = dragRef.current
-    setPan({ x: panX + (e.clientX - startX), y: panY + (e.clientY - startY) })
-  }, [dragging])
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!dragging) return
+      const { startX, startY, panX, panY } = dragRef.current
+      setPan({ x: panX + (e.clientX - startX), y: panY + (e.clientY - startY) })
+    },
+    [dragging]
+  )
 
   const handleMouseUp = useCallback(() => setDragging(false), [])
 
@@ -85,13 +104,22 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col select-none">
       {/* Top bar */}
-      <div className="flex items-center bg-black/90 border-b border-white/10 flex-shrink-0 h-11" style={{ paddingLeft: 80 }}>
+      <div
+        className="flex items-center bg-black/90 border-b border-white/10 flex-shrink-0 h-11"
+        style={{ paddingLeft: 80 }}
+      >
         <button
           onClick={onClose}
           className="flex items-center gap-1.5 text-white/80 hover:text-white text-sm font-medium transition-colors px-3 h-full"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M10.5 3L5.5 8l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path
+              d="M10.5 3L5.5 8l5 5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
           Back
         </button>
@@ -119,9 +147,17 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
             disabled={isFirst}
             className="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-center z-10 group disabled:cursor-default"
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isFirst ? 'opacity-0' : 'bg-black/40 group-hover:bg-black/70 opacity-80'}`}>
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isFirst ? 'opacity-0' : 'bg-black/40 group-hover:bg-black/70 opacity-80'}`}
+            >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M12 5l-5 5 5 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M12 5l-5 5 5 5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
           </button>
@@ -140,7 +176,7 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
             transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
             transformOrigin: 'center center',
             transition: dragging ? 'none' : 'transform 0.12s ease-out',
-            pointerEvents: 'none',
+            pointerEvents: 'none'
           }}
         />
 
@@ -151,9 +187,17 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
             disabled={isLast}
             className="absolute right-0 top-0 bottom-0 w-16 flex items-center justify-center z-10 group disabled:cursor-default"
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isLast ? 'opacity-0' : 'bg-black/40 group-hover:bg-black/70 opacity-80'}`}>
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isLast ? 'opacity-0' : 'bg-black/40 group-hover:bg-black/70 opacity-80'}`}
+            >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M8 5l5 5-5 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path
+                  d="M8 5l5 5-5 5"
+                  stroke="white"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
             </div>
           </button>
