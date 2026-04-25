@@ -332,6 +332,78 @@ function deriveContentRating(detail: { is_adult?: boolean; is_mature?: boolean; 
   return 'all-ages' as const
 }
 
+type Fetcher = (url: string, init?: RequestInit) => Promise<Response>
+
+export function createComixToProvider(fetcher: Fetcher): SourceProvider {
+  async function get<T>(path: string): Promise<T> {
+    const resp = await fetcher(`${BASE_URL}${path}`, { headers: HEADERS })
+    if (!resp.ok) throw new Error(`Comix.to API ${resp.status}: ${path}`)
+    return resp.json() as Promise<T>
+  }
+
+  return {
+    id: 'comixto',
+
+    async browse(page = 1, sort = 'latest'): Promise<SeriesResult[]> {
+      const apiSort = sort === 'rating' ? 'top_rating' : sort === 'popular' ? 'viewed' : sort === 'new' ? 'new' : 'latest'
+      const data = await get<unknown>(`/api/v2/manga?q=&limit=20&sort=${apiSort}&page=${page}`)
+      const items = extractItems(data)
+      return items.map(m => ({
+        id: m.hash_id ?? m.id ?? '',
+        title: m.title,
+        coverUrl: posterUrl(m.poster),
+        latestChapter: (m.last_chapter ?? m.latest_chapter ?? m.chapter) != null ? `Ch. ${m.last_chapter ?? m.latest_chapter ?? m.chapter}` : undefined,
+        rating: (m.rating ?? m.score) != null ? parseFloat(String(m.rating ?? m.score)) : undefined,
+      })).filter(m => m.id)
+    },
+
+    async search(query: string): Promise<SeriesResult[]> {
+      const data = await get<unknown>(`/api/v2/manga?q=${encodeURIComponent(query)}&limit=100&sort=latest`)
+      const items = extractItems(data)
+      return items.map(m => ({ id: m.hash_id ?? m.id ?? '', title: m.title, coverUrl: posterUrl(m.poster) })).filter(m => m.id)
+    },
+
+    async getSeries(id: string): Promise<SeriesDetail> {
+      interface DetailResult { result?: { title?: string; description?: string; genres?: string[]; poster?: unknown; is_adult?: boolean; is_mature?: boolean; content_rating?: string; age_rating?: string; type?: string } }
+      interface ChapterItem { chapter_id?: string; chapter_number?: string; chapter_title?: string; upload_date?: string }
+
+      const [detailRaw, chaptersRaw] = await Promise.all([
+        get<DetailResult>(`/api/v2/manga/${id}`),
+        get<{ result?: ChapterItem[] }>(`/api/v2/manga/${id}/chapter-indexes`),
+      ])
+      const detail = detailRaw.result ?? {}
+      const chapterItems = Array.isArray(chaptersRaw.result) ? chaptersRaw.result : []
+      const chapters: ChapterEntry[] = chapterItems.map(c => ({
+        id: c.chapter_id ?? '',
+        number: c.chapter_number ?? '',
+        title: c.chapter_title ?? '',
+        date: c.upload_date ?? '',
+      }))
+      return {
+        id,
+        title: detail.title ?? '',
+        coverUrl: posterUrl(detail.poster),
+        description: detail.description ?? '',
+        genres: detail.genres ?? [],
+        chapters,
+        contentRating: deriveContentRating(detail),
+      }
+    },
+
+    async getChapterPages(chapterId: string): Promise<PageEntry[]> {
+      interface ChapterResult { result?: { images?: Array<{ url: string }> } }
+      const data = await get<ChapterResult>(`/api/v2/chapters/${chapterId}`)
+      return (data?.result?.images ?? []).map(img => ({ url: img.url }))
+    },
+
+    async fetchPageBuffer(url: string): Promise<Buffer> {
+      const resp = await fetcher(url, { headers: { ...HEADERS, Referer: 'https://comix.to/' } })
+      if (!resp.ok) throw new Error(`Comix.to image fetch failed: ${resp.status}`)
+      return Buffer.from(await resp.arrayBuffer())
+    },
+  }
+}
+
 export const comixtoProvider: SourceProvider = {
   id: 'comixto',
 
