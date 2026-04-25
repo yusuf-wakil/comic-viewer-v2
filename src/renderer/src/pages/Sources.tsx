@@ -14,12 +14,10 @@ interface Props {
 }
 
 const SOURCE_LABELS: Record<SourceId, string> = {
-  comixto: 'Comix.to',
-  mangakakalot: 'Mangakakalot',
-  readallcomics: 'ReadAllComics'
+  comixto: 'Comix.to'
 }
 
-const ALL_SOURCES: SourceId[] = ['comixto', 'mangakakalot', 'readallcomics']
+const ALL_SOURCES: SourceId[] = ['comixto']
 
 const RATING_BADGE: Record<ContentRating, { label: string; className: string }> = {
   'all-ages': { label: 'All Ages', className: 'bg-green-100 text-green-700' },

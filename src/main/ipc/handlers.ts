@@ -6,8 +6,6 @@ import { scanFolder } from '../library/scanner'
 import { extractPages } from '../readers/cbz'
 import { storePages, storeLazyPages } from '../protocol/comic-page'
 import { register, get } from '../sources/index'
-import { createReadAllComicsProvider } from '../sources/readallcomics'
-import { mangakakalotProvider } from '../sources/mangakakalot'
 import { comixtoProvider } from '../sources/comixto'
 import { comixBrowser } from '../sources/comixto-browser'
 import type { IpcChannels } from '@shared/ipc/types'
@@ -24,8 +22,6 @@ function handle<C extends keyof IpcChannels>(channel: C, fn: Handler<C>): void {
 
 export function registerHandlers(): void {
   const electronFetch: Fetcher = (url, init) => net.fetch(url, init as RequestInit) as Promise<Response>
-  register(createReadAllComicsProvider(electronFetch))
-  register(mangakakalotProvider)
   register(comixtoProvider)
 
   const db = getDb()

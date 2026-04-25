@@ -3,7 +3,6 @@ import { join } from 'node:path'
 import { registerComicPageProtocol } from './protocol/comic-page'
 import { registerHandlers } from './ipc/handlers'
 import { comixBrowser } from './sources/comixto-browser'
-import { mangakakalotBrowser } from './sources/mangakakalot-browser'
 
 app.whenReady().then(() => {
   // Inject Referer header for MangaPlus CDN so cover/page images load correctly
@@ -46,7 +45,7 @@ app.whenReady().then(() => {
   }
 })
 
-app.on('before-quit', () => { comixBrowser.destroy(); mangakakalotBrowser.destroy() })
+app.on('before-quit', () => { comixBrowser.destroy() })
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

@@ -1,4 +1,4 @@
-export type SourceId = 'readallcomics' | 'mangakakalot' | 'comixto'
+export type SourceId = 'comixto'
 
 export type BrowseSort = 'latest' | 'popular' | 'rating' | 'new'
 
