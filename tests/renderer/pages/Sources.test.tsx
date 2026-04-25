@@ -63,7 +63,7 @@ describe('Sources page', () => {
     fireEvent.click(screen.getAllByText('One Piece')[0])
     await waitFor(() => screen.getByText('Chapter 1'))
     fireEvent.click(screen.getByText('Chapter 1'))
-    await waitFor(() => expect(onOpenReader).toHaveBeenCalledWith('ch1', ['comic-page://abc/0']))
+    await waitFor(() => expect(onOpenReader).toHaveBeenCalledWith('ch1', ['comic-page://abc/0'], 'Ch. 1 — Chapter 1'))
   })
 
   test('Back button returns to series grid', async () => {
