@@ -18,7 +18,7 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
     { id: 'library', label: 'Library' },
     { id: 'sources', label: 'Sources' },
     { id: 'tracking', label: 'Tracking' },
-    { id: 'labels', label: 'Labels' },
+    { id: 'labels', label: 'Labels' }
   ]
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
         OpenComic
       </span>
 
-      {navItems.map(item => (
+      {navItems.map((item) => (
         <button
           key={item.id}
           onClick={() => onSectionChange(item.id)}
@@ -65,7 +65,7 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
         <input
           type="search"
           placeholder="Search..."
-          onChange={e => onSearch(e.target.value)}
+          onChange={(e) => onSearch(e.target.value)}
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           className="w-48 px-3 py-1.5 text-sm border border-border rounded-full bg-surface text-white placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-accent/50"
         />
@@ -82,16 +82,25 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
       <ThemeSwitcher />
 
       {/* Settings gear */}
-      <div ref={settingsRef} className="relative ml-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+      <div
+        ref={settingsRef}
+        className="relative ml-1"
+        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+      >
         <button
           type="button"
           aria-label="Settings"
-          onClick={() => setSettingsOpen(o => !o)}
+          onClick={() => setSettingsOpen((o) => !o)}
           className="p-1.5 rounded-md text-text-muted hover:text-text hover:bg-surface-raised transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M13.3 6.6 12 6a4.6 4.6 0 0 0-.4-.9l.6-1.3a.7.7 0 0 0-.1-.8l-.9-.9a.7.7 0 0 0-.8-.1L9.1 2.4A4.6 4.6 0 0 0 8.2 2H8a.7.7 0 0 0-.7.5L6.7 4A4.6 4.6 0 0 0 5.8 4.4L4.5 3.8a.7.7 0 0 0-.8.1l-.9.9a.7.7 0 0 0-.1.8L3.3 7 3 8v.2c0 .3.2.6.5.7l1.2.6c.1.3.3.6.4.9l-.6 1.3a.7.7 0 0 0 .1.8l.9.9a.7.7 0 0 0 .8.1l1.3-.6c.3.1.6.3.9.4l.3 1.2c.1.3.4.5.7.5h1.3c.3 0 .6-.2.7-.5l.3-1.2c.3-.1.6-.3.9-.4l1.3.6a.7.7 0 0 0 .8-.1l.9-.9a.7.7 0 0 0 .1-.8L13 9.1A4.6 4.6 0 0 0 13.4 8l1.2-.3a.7.7 0 0 0 .4-.7V6.7a.7.7 0 0 0-.5-.7L13.3 6.6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M13.3 6.6 12 6a4.6 4.6 0 0 0-.4-.9l.6-1.3a.7.7 0 0 0-.1-.8l-.9-.9a.7.7 0 0 0-.8-.1L9.1 2.4A4.6 4.6 0 0 0 8.2 2H8a.7.7 0 0 0-.7.5L6.7 4A4.6 4.6 0 0 0 5.8 4.4L4.5 3.8a.7.7 0 0 0-.8.1l-.9.9a.7.7 0 0 0-.1.8L3.3 7 3 8v.2c0 .3.2.6.5.7l1.2.6c.1.3.3.6.4.9l-.6 1.3a.7.7 0 0 0 .1.8l.9.9a.7.7 0 0 0 .8.1l1.3-.6c.3.1.6.3.9.4l.3 1.2c.1.3.4.5.7.5h1.3c.3 0 .6-.2.7-.5l.3-1.2c.3-.1.6-.3.9-.4l1.3.6a.7.7 0 0 0 .8-.1l.9-.9a.7.7 0 0 0 .1-.8L13 9.1A4.6 4.6 0 0 0 13.4 8l1.2-.3a.7.7 0 0 0 .4-.7V6.7a.7.7 0 0 0-.5-.7L13.3 6.6Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
 
@@ -106,7 +115,10 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
               <div className="flex bg-bg rounded-md overflow-hidden text-xs border border-border">
                 <button
                   type="button"
-                  onClick={() => { setScrollMode(false); setSettingsOpen(false) }}
+                  onClick={() => {
+                    setScrollMode(false)
+                    setSettingsOpen(false)
+                  }}
                   data-active={String(!scrollMode)}
                   className={`px-2.5 py-1 font-medium transition-colors ${!scrollMode ? 'bg-accent text-bg' : 'text-text-muted hover:text-text'}`}
                 >
@@ -114,7 +126,10 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setScrollMode(true); setSettingsOpen(false) }}
+                  onClick={() => {
+                    setScrollMode(true)
+                    setSettingsOpen(false)
+                  }}
                   data-active={String(scrollMode)}
                   className={`px-2.5 py-1 font-medium transition-colors ${scrollMode ? 'bg-accent text-bg' : 'text-text-muted hover:text-text'}`}
                 >

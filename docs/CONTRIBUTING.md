@@ -34,6 +34,7 @@ npm run dev
 ## Reporting Bugs
 
 Open a GitHub issue with:
+
 - Steps to reproduce
 - Expected vs actual behavior
 - OS and app version

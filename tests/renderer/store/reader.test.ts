@@ -6,8 +6,12 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {}
   return {
     getItem: vi.fn((key: string) => store[key] ?? null),
-    setItem: vi.fn((key: string, value: string) => { store[key] = value }),
-    clear: () => { store = {} }
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value
+    }),
+    clear: () => {
+      store = {}
+    }
   }
 })()
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
@@ -18,7 +22,10 @@ beforeEach(() => {
   localStorageMock.clear()
   vi.clearAllMocks()
   useReaderStore.setState({
-    comicId: null, pageUrls: [], currentPage: 0, scrollMode: false
+    comicId: null,
+    pageUrls: [],
+    currentPage: 0,
+    scrollMode: false
   })
 })
 

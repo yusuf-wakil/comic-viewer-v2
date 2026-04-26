@@ -12,7 +12,11 @@ vi.mock('../../../src/renderer/src/hooks/useIpc', () => ({
       }
       if (channel === 'sources:getSeries') {
         return Promise.resolve({
-          id: '1', title: 'One Piece', coverUrl: '', description: 'Pirates', genres: ['Action'],
+          id: '1',
+          title: 'One Piece',
+          coverUrl: '',
+          description: 'Pirates',
+          genres: ['Action'],
           chapters: [{ id: 'ch1', number: '1', title: 'Chapter 1', date: '2023-01-01' }]
         } as SeriesDetail)
       }
@@ -32,7 +36,11 @@ function renderSources(onOpenReader = vi.fn()) {
 
 beforeEach(() => {
   useSourcesStore.setState({
-    activeSource: 'comixto', results: [], selectedSeries: null, loading: false, error: null
+    activeSource: 'comixto',
+    results: [],
+    selectedSeries: null,
+    loading: false,
+    error: null
   })
 })
 
@@ -61,7 +69,9 @@ describe('Sources page', () => {
     fireEvent.click(screen.getAllByText('One Piece')[0])
     await waitFor(() => screen.getByText('Chapter 1'))
     fireEvent.click(screen.getByText('Chapter 1'))
-    await waitFor(() => expect(onOpenReader).toHaveBeenCalledWith('ch1', ['comic-page://abc/0'], 'Ch. 1 — Chapter 1'))
+    await waitFor(() =>
+      expect(onOpenReader).toHaveBeenCalledWith('ch1', ['comic-page://abc/0'], 'Ch. 1 — Chapter 1')
+    )
   })
 
   test('Back button returns to series grid', async () => {

@@ -9,7 +9,7 @@
   --color-accent: #2dd4bf;
 }
 
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-bg: var(--color-bg);

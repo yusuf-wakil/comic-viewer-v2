@@ -75,29 +75,29 @@ Output: AppImage, Snap, and `.deb` in `dist/`.
 
 ### Build output directories
 
-| Path | Contents |
-|---|---|
-| `out/` | Compiled JS/CSS from `electron-vite` (intermediate) |
-| `dist/` | Final packaged app and installer |
+| Path    | Contents                                            |
+| ------- | --------------------------------------------------- |
+| `out/`  | Compiled JS/CSS from `electron-vite` (intermediate) |
+| `dist/` | Final packaged app and installer                    |
 
 ---
 
 ## Scripts
 
-| Command | Description |
-|---|---|
-| `npm run dev` | Start in development mode with hot reload |
-| `npm run build:mac` | Compile and package for macOS (DMG) |
-| `npm run build:win` | Compile and package for Windows (NSIS installer) |
-| `npm run build:linux` | Compile and package for Linux (AppImage/deb/snap) |
-| `npm run test` | Run all tests (main + renderer) |
-| `npm run test:main` | Run main process tests only |
-| `npm run test:renderer` | Run renderer/component tests only |
-| `npm run test:watch` | Run main process tests in watch mode |
-| `npm run typecheck` | Type-check both main and renderer |
-| `npm run lint` | Lint with ESLint |
-| `npm run format` | Format with Prettier |
-| `npm run rebuild` | Rebuild native modules (better-sqlite3) for current Node/Electron |
+| Command                 | Description                                                       |
+| ----------------------- | ----------------------------------------------------------------- |
+| `npm run dev`           | Start in development mode with hot reload                         |
+| `npm run build:mac`     | Compile and package for macOS (DMG)                               |
+| `npm run build:win`     | Compile and package for Windows (NSIS installer)                  |
+| `npm run build:linux`   | Compile and package for Linux (AppImage/deb/snap)                 |
+| `npm run test`          | Run all tests (main + renderer)                                   |
+| `npm run test:main`     | Run main process tests only                                       |
+| `npm run test:renderer` | Run renderer/component tests only                                 |
+| `npm run test:watch`    | Run main process tests in watch mode                              |
+| `npm run typecheck`     | Type-check both main and renderer                                 |
+| `npm run lint`          | Lint with ESLint                                                  |
+| `npm run format`        | Format with Prettier                                              |
+| `npm run rebuild`       | Rebuild native modules (better-sqlite3) for current Node/Electron |
 
 ---
 
@@ -143,11 +143,11 @@ The app follows standard Electron architecture with a strict IPC boundary:
 
 Stored in `opencomic.db` in the OS app-data directory (`~/Library/Application Support/OpenComic/` on macOS).
 
-| Table | Purpose |
-|---|---|
-| `comics` | Library metadata: path, title, series, cover URL, format, page count |
-| `reading_progress` | Per-comic current page, total pages, last-read timestamp |
-| `settings` | Key-value app configuration |
+| Table              | Purpose                                                              |
+| ------------------ | -------------------------------------------------------------------- |
+| `comics`           | Library metadata: path, title, series, cover URL, format, page count |
+| `reading_progress` | Per-comic current page, total pages, last-read timestamp             |
+| `settings`         | Key-value app configuration                                          |
 
 ---
 

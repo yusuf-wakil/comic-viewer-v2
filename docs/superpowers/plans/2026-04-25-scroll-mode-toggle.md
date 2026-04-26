@@ -12,21 +12,22 @@
 
 ## File Map
 
-| File | Change |
-|------|--------|
-| `src/renderer/src/store/reader.ts` | Add `scrollMode: boolean`, `setScrollMode(v: boolean)`, `localStorage` load/save |
-| `src/renderer/src/components/ReaderView.tsx` | New props `scrollMode`/`onToggleScrollMode`, segmented pill in top bar, scroll body with `IntersectionObserver`, conditional bottom bar |
-| `src/renderer/src/pages/Reader.tsx` | Pull `scrollMode`/`setScrollMode` from store, pass to `ReaderView` |
-| `src/renderer/src/components/TopNav.tsx` | Gear icon button, local `open` state, dismissible dropdown with scroll mode toggle |
-| `tests/renderer/store/reader.test.ts` | New — store unit tests |
-| `tests/renderer/components/ReaderView.test.tsx` | New — pill rendering, scroll body, bottom bar |
-| `tests/renderer/components/TopNav.test.tsx` | New — gear button, dropdown toggle |
+| File                                            | Change                                                                                                                                  |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/renderer/src/store/reader.ts`              | Add `scrollMode: boolean`, `setScrollMode(v: boolean)`, `localStorage` load/save                                                        |
+| `src/renderer/src/components/ReaderView.tsx`    | New props `scrollMode`/`onToggleScrollMode`, segmented pill in top bar, scroll body with `IntersectionObserver`, conditional bottom bar |
+| `src/renderer/src/pages/Reader.tsx`             | Pull `scrollMode`/`setScrollMode` from store, pass to `ReaderView`                                                                      |
+| `src/renderer/src/components/TopNav.tsx`        | Gear icon button, local `open` state, dismissible dropdown with scroll mode toggle                                                      |
+| `tests/renderer/store/reader.test.ts`           | New — store unit tests                                                                                                                  |
+| `tests/renderer/components/ReaderView.test.tsx` | New — pill rendering, scroll body, bottom bar                                                                                           |
+| `tests/renderer/components/TopNav.test.tsx`     | New — gear button, dropdown toggle                                                                                                      |
 
 ---
 
 ## Task 1: Extend reader store with scrollMode
 
 **Files:**
+
 - Modify: `src/renderer/src/store/reader.ts`
 - Create: `tests/renderer/store/reader.test.ts`
 
@@ -43,8 +44,12 @@ const localStorageMock = (() => {
   let store: Record<string, string> = {}
   return {
     getItem: vi.fn((key: string) => store[key] ?? null),
-    setItem: vi.fn((key: string, value: string) => { store[key] = value }),
-    clear: () => { store = {} }
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value
+    }),
+    clear: () => {
+      store = {}
+    }
   }
 })()
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
@@ -55,7 +60,10 @@ beforeEach(() => {
   localStorageMock.clear()
   vi.clearAllMocks()
   useReaderStore.setState({
-    comicId: null, pageUrls: [], currentPage: 0, scrollMode: false
+    comicId: null,
+    pageUrls: [],
+    currentPage: 0,
+    scrollMode: false
   })
 })
 
@@ -164,6 +172,7 @@ git commit -m "feat: add scrollMode to reader store with localStorage persistenc
 ## Task 2: Add segmented pill to ReaderView top bar
 
 **Files:**
+
 - Modify: `src/renderer/src/components/ReaderView.tsx`
 - Create: `tests/renderer/components/ReaderView.test.tsx`
 
@@ -182,7 +191,7 @@ beforeAll(() => {
   global.IntersectionObserver = vi.fn().mockImplementation(() => ({
     observe: vi.fn(),
     unobserve: vi.fn(),
-    disconnect: vi.fn(),
+    disconnect: vi.fn()
   }))
 })
 
@@ -195,7 +204,7 @@ const baseProps = {
   onClose: vi.fn(),
   onPageChange: vi.fn(),
   scrollMode: false,
-  onToggleScrollMode: vi.fn(),
+  onToggleScrollMode: vi.fn()
 }
 
 describe('ReaderView – scroll mode pill', () => {
@@ -246,29 +255,38 @@ Expected: FAIL — `scrollMode` prop not accepted / pill buttons not present.
 In `src/renderer/src/components/ReaderView.tsx`:
 
 1. Add to the `Props` interface:
+
 ```ts
 scrollMode: boolean
 onToggleScrollMode: () => void
 ```
 
 2. Destructure the new props in the function signature:
+
 ```ts
 export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClose, onPageChange, scrollMode, onToggleScrollMode }: Props) {
 ```
 
 3. Replace the right-side spacer `<div style={{ width: 80 }} />` in the top bar with the segmented pill:
+
 ```tsx
-{/* Scroll mode toggle pill */}
-<div className="flex bg-white/10 rounded-lg overflow-hidden mr-3" style={{ fontSize: 12 }}>
+{
+  /* Scroll mode toggle pill */
+}
+;<div className="flex bg-white/10 rounded-lg overflow-hidden mr-3" style={{ fontSize: 12 }}>
   <button
-    onClick={() => { if (scrollMode) onToggleScrollMode() }}
+    onClick={() => {
+      if (scrollMode) onToggleScrollMode()
+    }}
     data-active={String(!scrollMode)}
     className={`px-3 py-1 font-medium transition-colors ${!scrollMode ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'}`}
   >
     Page
   </button>
   <button
-    onClick={() => { if (!scrollMode) onToggleScrollMode() }}
+    onClick={() => {
+      if (!scrollMode) onToggleScrollMode()
+    }}
     data-active={String(scrollMode)}
     className={`px-3 py-1 font-medium transition-colors ${scrollMode ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'}`}
   >
@@ -305,6 +323,7 @@ git commit -m "feat: add Page/Scroll segmented pill to ReaderView top bar"
 ## Task 3: Implement scroll mode content area
 
 **Files:**
+
 - Modify: `src/renderer/src/components/ReaderView.tsx`
 - Modify: `tests/renderer/components/ReaderView.test.tsx`
 
@@ -345,6 +364,7 @@ Expected: FAIL — all modes still render single page.
 In `src/renderer/src/components/ReaderView.tsx`:
 
 1. Add new refs and state at the top of the component (after existing `useState`/`useRef` declarations):
+
 ```ts
 const pageRefs = useRef<(HTMLImageElement | null)[]>([])
 const [visiblePage, setVisiblePage] = useState(0)
@@ -354,15 +374,16 @@ const [visiblePage, setVisiblePage] = useState(0)
 
 ```ts
 useEffect(() => {
-  if (scrollMode) return   // ← add this line
+  if (scrollMode) return // ← add this line
   const el = containerRef.current
   if (!el) return
   el.addEventListener('wheel', handleWheel, { passive: false })
   return () => el.removeEventListener('wheel', handleWheel)
-}, [handleWheel, scrollMode])   // ← add scrollMode to deps
+}, [handleWheel, scrollMode]) // ← add scrollMode to deps
 ```
 
 3. Add `IntersectionObserver` effect after the updated wheel effect:
+
 ```ts
 useEffect(() => {
   if (!scrollMode) return
@@ -370,7 +391,7 @@ useEffect(() => {
   const ratios = new Array(refs.length).fill(0)
   const observer = new IntersectionObserver(
     (entries) => {
-      entries.forEach(entry => {
+      entries.forEach((entry) => {
         const i = refs.indexOf(entry.target as HTMLImageElement)
         if (i !== -1) ratios[i] = entry.intersectionRatio
       })
@@ -383,7 +404,7 @@ useEffect(() => {
     },
     { threshold: Array.from({ length: 21 }, (_, i) => i / 20) }
   )
-  refs.forEach(el => observer.observe(el))
+  refs.forEach((el) => observer.observe(el))
   return () => observer.disconnect()
 }, [scrollMode, pageUrls])
 ```
@@ -391,88 +412,110 @@ useEffect(() => {
 4. Replace the image area content block — find the block starting with `<div ref={containerRef}` (around line 105 in the original file) and replace it and all its children up to and including its closing `</div>` with the conditional below:
 
 ```tsx
-{/* Image area */}
-{scrollMode ? (
-  <div className="flex-1 overflow-y-auto min-h-0">
-    <div className="flex flex-col items-center" style={{ gap: 8, padding: '8px 0' }}>
-      {pageUrls.map((url, i) => (
-        <img
-          key={url}
-          ref={el => { pageRefs.current[i] = el }}
-          src={url}
-          alt={`Page ${i + 1}`}
-          draggable={false}
-          style={{ width: '100%', maxWidth: '100%', objectFit: 'contain', display: 'block' }}
-        />
-      ))}
-    </div>
-  </div>
-) : (
-  <div
-    ref={containerRef}
-    className="flex-1 flex items-center justify-center relative min-h-0 overflow-hidden"
-    style={{ cursor: isZoomed ? (dragging ? 'grabbing' : 'grab') : 'default' }}
-    onMouseDown={handleMouseDown}
-    onMouseMove={handleMouseMove}
-    onMouseUp={handleMouseUp}
-    onMouseLeave={handleMouseUp}
-    onDoubleClick={handleDoubleClick}
-  >
-    {/* Left arrow — hidden when zoomed */}
-    {!isZoomed && (
-      <button
-        onClick={onPrev}
-        disabled={isFirst}
-        className="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-center z-10 group disabled:cursor-default"
-      >
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isFirst ? 'opacity-0' : 'bg-black/40 group-hover:bg-black/70 opacity-80'}`}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M12 5l-5 5 5 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-      </button>
-    )}
-
-    {/* Page image */}
-    <img
-      key={pageUrls[currentPage]}
-      src={pageUrls[currentPage]}
-      alt={`Page ${currentPage + 1}`}
-      draggable={false}
-      style={{
-        maxHeight: '100%',
-        maxWidth: '100%',
-        objectFit: 'contain',
-        transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-        transformOrigin: 'center center',
-        transition: dragging ? 'none' : 'transform 0.12s ease-out',
-        pointerEvents: 'none',
-      }}
-    />
-
-    {/* Right arrow — hidden when zoomed */}
-    {!isZoomed && (
-      <button
-        onClick={onNext}
-        disabled={isLast}
-        className="absolute right-0 top-0 bottom-0 w-16 flex items-center justify-center z-10 group disabled:cursor-default"
-      >
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isLast ? 'opacity-0' : 'bg-black/40 group-hover:bg-black/70 opacity-80'}`}>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-            <path d="M8 5l5 5-5 5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
-      </button>
-    )}
-
-    {/* Zoom hint */}
-    {isZoomed && (
-      <div className="absolute bottom-3 right-3 bg-black/60 text-white/70 text-xs px-2 py-1 rounded pointer-events-none">
-        {Math.round(zoom * 100)}% · double-click to reset
+{
+  /* Image area */
+}
+{
+  scrollMode ? (
+    <div className="flex-1 overflow-y-auto min-h-0">
+      <div className="flex flex-col items-center" style={{ gap: 8, padding: '8px 0' }}>
+        {pageUrls.map((url, i) => (
+          <img
+            key={url}
+            ref={(el) => {
+              pageRefs.current[i] = el
+            }}
+            src={url}
+            alt={`Page ${i + 1}`}
+            draggable={false}
+            style={{ width: '100%', maxWidth: '100%', objectFit: 'contain', display: 'block' }}
+          />
+        ))}
       </div>
-    )}
-  </div>
-)}
+    </div>
+  ) : (
+    <div
+      ref={containerRef}
+      className="flex-1 flex items-center justify-center relative min-h-0 overflow-hidden"
+      style={{ cursor: isZoomed ? (dragging ? 'grabbing' : 'grab') : 'default' }}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      onDoubleClick={handleDoubleClick}
+    >
+      {/* Left arrow — hidden when zoomed */}
+      {!isZoomed && (
+        <button
+          onClick={onPrev}
+          disabled={isFirst}
+          className="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-center z-10 group disabled:cursor-default"
+        >
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isFirst ? 'opacity-0' : 'bg-black/40 group-hover:bg-black/70 opacity-80'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M12 5l-5 5 5 5"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </button>
+      )}
+
+      {/* Page image */}
+      <img
+        key={pageUrls[currentPage]}
+        src={pageUrls[currentPage]}
+        alt={`Page ${currentPage + 1}`}
+        draggable={false}
+        style={{
+          maxHeight: '100%',
+          maxWidth: '100%',
+          objectFit: 'contain',
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          transformOrigin: 'center center',
+          transition: dragging ? 'none' : 'transform 0.12s ease-out',
+          pointerEvents: 'none'
+        }}
+      />
+
+      {/* Right arrow — hidden when zoomed */}
+      {!isZoomed && (
+        <button
+          onClick={onNext}
+          disabled={isLast}
+          className="absolute right-0 top-0 bottom-0 w-16 flex items-center justify-center z-10 group disabled:cursor-default"
+        >
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isLast ? 'opacity-0' : 'bg-black/40 group-hover:bg-black/70 opacity-80'}`}
+          >
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+              <path
+                d="M8 5l5 5-5 5"
+                stroke="white"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </button>
+      )}
+
+      {/* Zoom hint */}
+      {isZoomed && (
+        <div className="absolute bottom-3 right-3 bg-black/60 text-white/70 text-xs px-2 py-1 rounded pointer-events-none">
+          {Math.round(zoom * 100)}% · double-click to reset
+        </div>
+      )}
+    </div>
+  )
+}
 ```
 
 - [ ] **Step 4: Run tests to confirm they pass**
@@ -503,6 +546,7 @@ git commit -m "feat: implement scroll mode content area with IntersectionObserve
 ## Task 4: Conditional bottom bar + wire Reader.tsx
 
 **Files:**
+
 - Modify: `src/renderer/src/components/ReaderView.tsx`
 - Modify: `src/renderer/src/pages/Reader.tsx`
 - Modify: `tests/renderer/components/ReaderView.test.tsx`
@@ -546,8 +590,10 @@ Expected: FAIL — bottom bar doesn't change between modes yet.
 Replace the bottom bar section in `src/renderer/src/components/ReaderView.tsx`:
 
 ```tsx
-{/* Bottom bar */}
-<div className="flex items-center justify-center gap-6 px-4 py-3 bg-black/90 border-t border-white/10 flex-shrink-0">
+{
+  /* Bottom bar */
+}
+;<div className="flex items-center justify-center gap-6 px-4 py-3 bg-black/90 border-t border-white/10 flex-shrink-0">
   {scrollMode ? (
     <span className="text-white text-sm font-medium tabular-nums">
       Page {visiblePage + 1} of {pageUrls.length}
@@ -597,19 +643,22 @@ interface Props {
 export function Reader({ comicId, pageUrls, title, onClose }: Props) {
   const { invoke } = useIpc()
   const { currentPage, next, prev, scrollMode, setScrollMode } = useReaderStore()
-  const updatePage = useTabsStore(s => s.updatePage)
+  const updatePage = useTabsStore((s) => s.updatePage)
 
   const invokeRef = useRef(invoke)
   invokeRef.current = invoke
 
-  const handlePageChange = useCallback(async (page: number) => {
-    updatePage(comicId, page)
-    try {
-      await invokeRef.current('reader:progress', { comicId, page })
-    } catch (e) {
-      console.error('Failed to save progress:', e)
-    }
-  }, [comicId, updatePage])
+  const handlePageChange = useCallback(
+    async (page: number) => {
+      updatePage(comicId, page)
+      try {
+        await invokeRef.current('reader:progress', { comicId, page })
+      } catch (e) {
+        console.error('Failed to save progress:', e)
+      }
+    },
+    [comicId, updatePage]
+  )
 
   return (
     <ReaderView
@@ -655,6 +704,7 @@ git commit -m "feat: conditional bottom bar and wire Reader to scrollMode store"
 ## Task 5: TopNav gear icon + settings dropdown
 
 **Files:**
+
 - Modify: `src/renderer/src/components/TopNav.tsx`
 - Create: `tests/renderer/components/TopNav.test.tsx`
 
@@ -673,7 +723,7 @@ import { useReaderStore } from '../../../src/renderer/src/store/reader'
 const baseProps = {
   activeSection: 'library' as const,
   onSectionChange: vi.fn(),
-  onAddFolder: vi.fn(),
+  onAddFolder: vi.fn()
 }
 
 beforeEach(() => {
@@ -777,9 +827,14 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
       className="flex items-center gap-1 pr-4 h-12 border-b border-gray-200 bg-white sticky top-0 z-10"
       style={{ paddingLeft: '80px', WebkitAppRegion: 'drag' } as React.CSSProperties}
     >
-      <span className="font-bold text-gray-900 mr-4 text-sm" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>OpenComic</span>
+      <span
+        className="font-bold text-gray-900 mr-4 text-sm"
+        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+      >
+        OpenComic
+      </span>
 
-      {navItems.map(item => (
+      {navItems.map((item) => (
         <button
           key={item.id}
           onClick={() => onSectionChange(item.id)}
@@ -800,7 +855,7 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
         <input
           type="search"
           placeholder="Search..."
-          onChange={e => onSearch(e.target.value)}
+          onChange={(e) => onSearch(e.target.value)}
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
           className="w-48 px-3 py-1.5 text-sm border border-gray-200 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white"
         />
@@ -815,21 +870,32 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
       </button>
 
       {/* Settings gear */}
-      <div ref={settingsRef} className="relative ml-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+      <div
+        ref={settingsRef}
+        className="relative ml-1"
+        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+      >
         <button
           aria-label="Settings"
-          onClick={() => setSettingsOpen(o => !o)}
+          onClick={() => setSettingsOpen((o) => !o)}
           className="p-1.5 rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M13.3 6.6 12 6a4.6 4.6 0 0 0-.4-.9l.6-1.3a.7.7 0 0 0-.1-.8l-.9-.9a.7.7 0 0 0-.8-.1L9.1 2.4A4.6 4.6 0 0 0 8.2 2H8a.7.7 0 0 0-.7.5L6.7 4A4.6 4.6 0 0 0 5.8 4.4L4.5 3.8a.7.7 0 0 0-.8.1l-.9.9a.7.7 0 0 0-.1.8L3.3 7 3 8v.2c0 .3.2.6.5.7l1.2.6c.1.3.3.6.4.9l-.6 1.3a.7.7 0 0 0 .1.8l.9.9a.7.7 0 0 0 .8.1l1.3-.6c.3.1.6.3.9.4l.3 1.2c.1.3.4.5.7.5h1.3c.3 0 .6-.2.7-.5l.3-1.2c.3-.1.6-.3.9-.4l1.3.6a.7.7 0 0 0 .8-.1l.9-.9a.7.7 0 0 0 .1-.8L13 9.1A4.6 4.6 0 0 0 13.4 8l1.2-.3a.7.7 0 0 0 .4-.7V6.7a.7.7 0 0 0-.5-.7L13.3 6.6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="currentColor" strokeWidth="1.5" />
+            <path
+              d="M13.3 6.6 12 6a4.6 4.6 0 0 0-.4-.9l.6-1.3a.7.7 0 0 0-.1-.8l-.9-.9a.7.7 0 0 0-.8-.1L9.1 2.4A4.6 4.6 0 0 0 8.2 2H8a.7.7 0 0 0-.7.5L6.7 4A4.6 4.6 0 0 0 5.8 4.4L4.5 3.8a.7.7 0 0 0-.8.1l-.9.9a.7.7 0 0 0-.1.8L3.3 7 3 8v.2c0 .3.2.6.5.7l1.2.6c.1.3.3.6.4.9l-.6 1.3a.7.7 0 0 0 .1.8l.9.9a.7.7 0 0 0 .8.1l1.3-.6c.3.1.6.3.9.4l.3 1.2c.1.3.4.5.7.5h1.3c.3 0 .6-.2.7-.5l.3-1.2c.3-.1.6-.3.9-.4l1.3.6a.7.7 0 0 0 .8-.1l.9-.9a.7.7 0 0 0 .1-.8L13 9.1A4.6 4.6 0 0 0 13.4 8l1.2-.3a.7.7 0 0 0 .4-.7V6.7a.7.7 0 0 0-.5-.7L13.3 6.6Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
           </svg>
         </button>
 
         {settingsOpen && (
           <div className="absolute right-0 top-full mt-1 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-2">
-            <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">Reader Settings</div>
+            <div className="px-3 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              Reader Settings
+            </div>
             <div className="h-px bg-gray-100 mx-3 my-1" />
             <div className="flex items-center justify-between px-3 py-2">
               <span className="text-sm text-gray-700">Scroll mode</span>

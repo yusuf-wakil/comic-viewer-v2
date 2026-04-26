@@ -7,7 +7,7 @@ const update: LatestUpdate = {
   seriesId: 'abc',
   title: 'Solo Leveling',
   coverUrl: 'https://example.com/cover.jpg',
-  recentChapters: [{ number: '201', date: '2024-03-01' }],
+  recentChapters: [{ number: '201', date: '2024-03-01' }]
 }
 
 describe('LatestReleasesCard', () => {

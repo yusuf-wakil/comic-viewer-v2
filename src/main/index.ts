@@ -32,7 +32,9 @@ app.whenReady().then(() => {
   }
 })
 
-app.on('before-quit', () => { comixBrowser.destroy() })
+app.on('before-quit', () => {
+  comixBrowser.destroy()
+})
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit()

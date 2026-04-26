@@ -43,7 +43,8 @@ export function registerComicPageProtocol(): void {
     let contentType = 'image/jpeg'
     if (buffer[0] === 0x89) contentType = 'image/png'
     else if (buffer[0] === 0x47) contentType = 'image/gif'
-    else if (buffer.length >= 12 && buffer.slice(8, 12).toString() === 'WEBP') contentType = 'image/webp'
+    else if (buffer.length >= 12 && buffer.slice(8, 12).toString() === 'WEBP')
+      contentType = 'image/webp'
 
     return new Response(new Uint8Array(buffer), {
       headers: { 'Content-Type': contentType }

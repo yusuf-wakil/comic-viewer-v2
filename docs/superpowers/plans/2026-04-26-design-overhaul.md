@@ -12,32 +12,33 @@
 
 ## File Map
 
-| Action | File | Purpose |
-|---|---|---|
-| Modify | `src/renderer/index.html` | Add CSP `unsafe-inline` + accent-restore inline script |
-| Modify | `src/renderer/src/index.css` | Add `:root` tokens + `@theme {}` Tailwind wiring |
-| Modify | `src/shared/types/source.ts` | Add `LatestUpdate` type + `updatedAt?` on `SeriesResult` |
-| Modify | `src/shared/ipc/types.ts` | Add `sources:getLatestUpdates` channel |
-| Modify | `src/main/sources/comixto.ts` | Map `updated_at` → `updatedAt` in browse results |
-| Modify | `src/main/sources/yskcomics.ts` | Leave `updatedAt` undefined (API has no timestamp) |
-| Modify | `src/main/ipc/handlers.ts` | Add `sources:getLatestUpdates` handler |
-| **Create** | `src/renderer/src/components/ThemeSwitcher.tsx` | Accent color popover, writes to CSS var + localStorage |
-| **Create** | `src/renderer/src/components/LatestReleasesCard.tsx` | Single latest-update card (cover + chapter + timestamp) |
-| **Create** | `src/renderer/src/components/LatestReleasesSection.tsx` | 2-col grid of cards, fetches on mount |
-| Modify | `src/renderer/src/components/TopNav.tsx` | Dark tokens + add ThemeSwitcher |
-| Modify | `src/renderer/src/components/CoverCard.tsx` | Dark tokens + accent progress bar + hover transition |
-| Modify | `src/renderer/src/pages/Library.tsx` | Add LatestReleasesSection + dark tokens |
-| Modify | `src/renderer/src/pages/Sources.tsx` | Dark tokens (layout unchanged) |
-| Modify | `src/renderer/src/components/ReaderView.tsx` | Dark tokens (layout unchanged) |
-| **Create** | `tests/renderer/components/ThemeSwitcher.test.tsx` | ThemeSwitcher unit tests |
-| **Create** | `tests/renderer/components/LatestReleasesCard.test.tsx` | Card unit tests |
-| **Create** | `tests/renderer/components/LatestReleasesSection.test.tsx` | Section fetch + render tests |
+| Action     | File                                                       | Purpose                                                  |
+| ---------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+| Modify     | `src/renderer/index.html`                                  | Add CSP `unsafe-inline` + accent-restore inline script   |
+| Modify     | `src/renderer/src/index.css`                               | Add `:root` tokens + `@theme {}` Tailwind wiring         |
+| Modify     | `src/shared/types/source.ts`                               | Add `LatestUpdate` type + `updatedAt?` on `SeriesResult` |
+| Modify     | `src/shared/ipc/types.ts`                                  | Add `sources:getLatestUpdates` channel                   |
+| Modify     | `src/main/sources/comixto.ts`                              | Map `updated_at` → `updatedAt` in browse results         |
+| Modify     | `src/main/sources/yskcomics.ts`                            | Leave `updatedAt` undefined (API has no timestamp)       |
+| Modify     | `src/main/ipc/handlers.ts`                                 | Add `sources:getLatestUpdates` handler                   |
+| **Create** | `src/renderer/src/components/ThemeSwitcher.tsx`            | Accent color popover, writes to CSS var + localStorage   |
+| **Create** | `src/renderer/src/components/LatestReleasesCard.tsx`       | Single latest-update card (cover + chapter + timestamp)  |
+| **Create** | `src/renderer/src/components/LatestReleasesSection.tsx`    | 2-col grid of cards, fetches on mount                    |
+| Modify     | `src/renderer/src/components/TopNav.tsx`                   | Dark tokens + add ThemeSwitcher                          |
+| Modify     | `src/renderer/src/components/CoverCard.tsx`                | Dark tokens + accent progress bar + hover transition     |
+| Modify     | `src/renderer/src/pages/Library.tsx`                       | Add LatestReleasesSection + dark tokens                  |
+| Modify     | `src/renderer/src/pages/Sources.tsx`                       | Dark tokens (layout unchanged)                           |
+| Modify     | `src/renderer/src/components/ReaderView.tsx`               | Dark tokens (layout unchanged)                           |
+| **Create** | `tests/renderer/components/ThemeSwitcher.test.tsx`         | ThemeSwitcher unit tests                                 |
+| **Create** | `tests/renderer/components/LatestReleasesCard.test.tsx`    | Card unit tests                                          |
+| **Create** | `tests/renderer/components/LatestReleasesSection.test.tsx` | Section fetch + render tests                             |
 
 ---
 
 ## Task 1: Color System — CSS Tokens + Tailwind Wiring
 
 **Files:**
+
 - Modify: `src/renderer/index.html`
 - Modify: `src/renderer/src/index.css`
 
@@ -58,8 +59,8 @@
         content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: comic-page: https://*.comix.to https://comix.to https://cdn.ysk-comics.com"
       />
       <script>
-        const accent = localStorage.getItem('opencomic-accent');
-        if (accent) document.documentElement.style.setProperty('--color-accent', accent);
+        const accent = localStorage.getItem('opencomic-accent')
+        if (accent) document.documentElement.style.setProperty('--color-accent', accent)
       </script>
     </head>
     <body>
@@ -83,7 +84,7 @@
     --color-accent: #2dd4bf;
   }
 
-  @import "tailwindcss";
+  @import 'tailwindcss';
 
   @theme {
     --color-bg: var(--color-bg);
@@ -104,6 +105,7 @@
   ```bash
   npm run typecheck
   ```
+
   Expected: no errors (CSS changes don't affect TypeScript).
 
 - [ ] **Step 4: Commit**
@@ -118,6 +120,7 @@
 ## Task 2: Data Types — LatestUpdate + IPC Channel + updatedAt on SeriesResult
 
 **Files:**
+
 - Modify: `src/shared/types/source.ts`
 - Modify: `src/shared/ipc/types.ts`
 
@@ -132,7 +135,7 @@
     coverUrl: string
     latestChapter?: string
     rating?: number
-    updatedAt?: string        // ← add this line
+    updatedAt?: string // ← add this line
   }
 
   // Add after SeriesResult:
@@ -140,7 +143,7 @@
     seriesId: string
     title: string
     coverUrl: string
-    recentChapters: Array<{ number: string; date: string }>  // 1 entry per series (browse API limit)
+    recentChapters: Array<{ number: string; date: string }> // 1 entry per series (browse API limit)
   }
   ```
 
@@ -156,7 +159,13 @@
 
   ```ts
   import type { Comic, PageUrl, ReadingProgress } from '../types/comic'
-  import type { SourceId, BrowseSort, SeriesResult, SeriesDetail, LatestUpdate } from '../types/source'
+  import type {
+    SourceId,
+    BrowseSort,
+    SeriesResult,
+    SeriesDetail,
+    LatestUpdate
+  } from '../types/source'
   ```
 
 - [ ] **Step 3: Typecheck**
@@ -164,6 +173,7 @@
   ```bash
   npm run typecheck
   ```
+
   Expected: no errors.
 
 - [ ] **Step 4: Commit**
@@ -178,6 +188,7 @@
 ## Task 3: Source Data — Map updatedAt in Browse Results
 
 **Files:**
+
 - Modify: `src/main/sources/comixto.ts`
 - Modify: `src/main/sources/yskcomics.ts`
 
@@ -190,14 +201,16 @@
     const mockFetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        result: [{
-          hash_id: 'abc123',
-          title: 'Test Manga',
-          poster: 'https://example.com/cover.jpg',
-          last_chapter: 42,
-          updated_at: 1700000000,   // unix timestamp
-        }]
-      }),
+        result: [
+          {
+            hash_id: 'abc123',
+            title: 'Test Manga',
+            poster: 'https://example.com/cover.jpg',
+            last_chapter: 42,
+            updated_at: 1700000000 // unix timestamp
+          }
+        ]
+      })
     })
     const provider = createComixToProvider(mockFetch as Fetcher)
     const results = await provider.browse(1, 'latest')
@@ -210,6 +223,7 @@
   ```bash
   npm run test:main -- --reporter=verbose 2>&1 | grep -A3 "updatedAt"
   ```
+
   Expected: FAIL — `updatedAt` is `undefined`.
 
 - [ ] **Step 3: Update `comixto.ts` — map `updated_at` in both `createComixToProvider.browse` and `comixtoProvider.browse`**
@@ -217,23 +231,26 @@
   In `createComixToProvider.browse` (around line 351), change the return mapping:
 
   ```ts
-  return items.map(m => {
-    const latestNum = m.last_chapter ?? m.latest_chapter ?? m.chapter
-    const updatedRaw = m.updated_at
-    const updatedAt = updatedRaw != null
-      ? (typeof updatedRaw === 'number'
-          ? new Date(updatedRaw * 1000).toISOString().slice(0, 10)
-          : String(updatedRaw).slice(0, 10))
-      : undefined
-    return {
-      id: m.hash_id ?? m.id ?? '',
-      title: m.title,
-      coverUrl: posterUrl(m.poster),
-      latestChapter: latestNum != null ? `Ch. ${latestNum}` : undefined,
-      rating: (m.rating ?? m.score) != null ? parseFloat(String(m.rating ?? m.score)) : undefined,
-      updatedAt,
-    }
-  }).filter(m => m.id)
+  return items
+    .map((m) => {
+      const latestNum = m.last_chapter ?? m.latest_chapter ?? m.chapter
+      const updatedRaw = m.updated_at
+      const updatedAt =
+        updatedRaw != null
+          ? typeof updatedRaw === 'number'
+            ? new Date(updatedRaw * 1000).toISOString().slice(0, 10)
+            : String(updatedRaw).slice(0, 10)
+          : undefined
+      return {
+        id: m.hash_id ?? m.id ?? '',
+        title: m.title,
+        coverUrl: posterUrl(m.poster),
+        latestChapter: latestNum != null ? `Ch. ${latestNum}` : undefined,
+        rating: (m.rating ?? m.score) != null ? parseFloat(String(m.rating ?? m.score)) : undefined,
+        updatedAt
+      }
+    })
+    .filter((m) => m.id)
   ```
 
   Apply the same change to `comixtoProvider.browse` (around line 419).
@@ -245,6 +262,7 @@
   ```bash
   npm run test:main -- --reporter=verbose 2>&1 | grep -E "PASS|FAIL|updatedAt"
   ```
+
   Expected: PASS.
 
 - [ ] **Step 6: Typecheck**
@@ -265,6 +283,7 @@
 ## Task 4: IPC Handler — sources:getLatestUpdates
 
 **Files:**
+
 - Modify: `src/main/ipc/handlers.ts`
 
 - [ ] **Step 1: Add the handler in `src/main/ipc/handlers.ts`**
@@ -275,13 +294,13 @@
   handle('sources:getLatestUpdates', async (_e, { sourceId }) => {
     try {
       const results = await get(sourceId).browse(1, 'latest')
-      const updates: LatestUpdate[] = results.slice(0, 10).map(r => ({
+      const updates: LatestUpdate[] = results.slice(0, 10).map((r) => ({
         seriesId: r.id,
         title: r.title,
         coverUrl: r.coverUrl,
         recentChapters: r.latestChapter
           ? [{ number: r.latestChapter, date: r.updatedAt ?? '' }]
-          : [],
+          : []
       }))
       return { ok: true, data: updates }
     } catch (e) {
@@ -302,6 +321,7 @@
   ```bash
   npm run typecheck
   ```
+
   Expected: no errors — `LatestUpdate` and the new channel are now in scope.
 
 - [ ] **Step 3: Commit**
@@ -316,6 +336,7 @@
 ## Task 5: ThemeSwitcher Component
 
 **Files:**
+
 - Create: `src/renderer/src/components/ThemeSwitcher.tsx`
 - Create: `tests/renderer/components/ThemeSwitcher.test.tsx`
 
@@ -379,6 +400,7 @@
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "ThemeSwitcher|PASS|FAIL"
   ```
+
   Expected: FAIL — component doesn't exist yet.
 
 - [ ] **Step 3: Implement `ThemeSwitcher.tsx`**
@@ -389,16 +411,18 @@
   import { useState, useRef, useEffect } from 'react'
 
   const ACCENTS = [
-    { name: 'Teal',   value: '#2dd4bf' },
+    { name: 'Teal', value: '#2dd4bf' },
     { name: 'Indigo', value: '#818cf8' },
-    { name: 'Amber',  value: '#fbbf24' },
-    { name: 'Rose',   value: '#fb7185' },
-    { name: 'Lime',   value: '#a3e635' },
+    { name: 'Amber', value: '#fbbf24' },
+    { name: 'Rose', value: '#fb7185' },
+    { name: 'Lime', value: '#a3e635' }
   ]
 
   function getCurrentAccent(): string {
-    return getComputedStyle(document.documentElement)
-      .getPropertyValue('--color-accent').trim() || '#2dd4bf'
+    return (
+      getComputedStyle(document.documentElement).getPropertyValue('--color-accent').trim() ||
+      '#2dd4bf'
+    )
   }
 
   export function ThemeSwitcher() {
@@ -423,17 +447,21 @@
     }
 
     return (
-      <div ref={ref} className="relative" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+      <div
+        ref={ref}
+        className="relative"
+        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+      >
         <button
           type="button"
           aria-label="Change theme"
-          onClick={() => setOpen(o => !o)}
+          onClick={() => setOpen((o) => !o)}
           className="p-1.5 rounded-md text-text-muted hover:text-text hover:bg-surface transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M8 1.5C8 1.5 5 4 5 8s3 6.5 3 6.5" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M1.5 8h13" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 1.5C8 1.5 5 4 5 8s3 6.5 3 6.5" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M1.5 8h13" stroke="currentColor" strokeWidth="1.5" />
           </svg>
         </button>
 
@@ -447,7 +475,9 @@
                 onClick={() => selectAccent(value)}
                 style={{ backgroundColor: value }}
                 className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${
-                  active === value ? 'ring-2 ring-white ring-offset-1 ring-offset-surface-raised' : ''
+                  active === value
+                    ? 'ring-2 ring-white ring-offset-1 ring-offset-surface-raised'
+                    : ''
                 }`}
               />
             ))}
@@ -463,6 +493,7 @@
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "ThemeSwitcher|PASS|FAIL"
   ```
+
   Expected: all ThemeSwitcher tests PASS.
 
 - [ ] **Step 5: Commit**
@@ -477,6 +508,7 @@
 ## Task 6: LatestReleasesCard Component
 
 **Files:**
+
 - Create: `src/renderer/src/components/LatestReleasesCard.tsx`
 - Create: `tests/renderer/components/LatestReleasesCard.test.tsx`
 
@@ -494,7 +526,7 @@
     seriesId: 'abc',
     title: 'Solo Leveling',
     coverUrl: 'https://example.com/cover.jpg',
-    recentChapters: [{ number: 'Ch. 201', date: '2024-03-01' }],
+    recentChapters: [{ number: 'Ch. 201', date: '2024-03-01' }]
   }
 
   describe('LatestReleasesCard', () => {
@@ -530,6 +562,7 @@
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "LatestReleasesCard|PASS|FAIL"
   ```
+
   Expected: FAIL — component doesn't exist yet.
 
 - [ ] **Step 3: Implement `LatestReleasesCard.tsx`**
@@ -552,7 +585,9 @@
               src={update.coverUrl}
               alt={update.title}
               className="w-full h-full object-cover"
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+              onError={(e) => {
+                ;(e.target as HTMLImageElement).style.display = 'none'
+              }}
             />
           ) : null}
         </div>
@@ -575,6 +610,7 @@
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "LatestReleasesCard|PASS|FAIL"
   ```
+
   Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -589,6 +625,7 @@
 ## Task 7: LatestReleasesSection Component
 
 **Files:**
+
 - Create: `src/renderer/src/components/LatestReleasesSection.tsx`
 - Create: `tests/renderer/components/LatestReleasesSection.test.tsx`
 
@@ -603,20 +640,30 @@
   import type { LatestUpdate } from '../../../src/shared/types/source'
 
   const mockUpdates: LatestUpdate[] = [
-    { seriesId: '1', title: 'Solo Leveling', coverUrl: '', recentChapters: [{ number: 'Ch. 201', date: '2024-03-01' }] },
-    { seriesId: '2', title: 'Jujutsu Kaisen', coverUrl: '', recentChapters: [{ number: 'Ch. 265', date: '2024-02-28' }] },
+    {
+      seriesId: '1',
+      title: 'Solo Leveling',
+      coverUrl: '',
+      recentChapters: [{ number: 'Ch. 201', date: '2024-03-01' }]
+    },
+    {
+      seriesId: '2',
+      title: 'Jujutsu Kaisen',
+      coverUrl: '',
+      recentChapters: [{ number: 'Ch. 265', date: '2024-02-28' }]
+    }
   ]
 
   beforeEach(() => {
     window.ipc = {
-      invoke: vi.fn().mockResolvedValue({ ok: true, data: mockUpdates }),
+      invoke: vi.fn().mockResolvedValue({ ok: true, data: mockUpdates })
     } as unknown as typeof window.ipc
   })
 
   describe('LatestReleasesSection', () => {
     it('renders null while loading (no spinner visible)', () => {
       window.ipc = {
-        invoke: vi.fn().mockReturnValue(new Promise(() => {})), // never resolves
+        invoke: vi.fn().mockReturnValue(new Promise(() => {})) // never resolves
       } as unknown as typeof window.ipc
       const { container } = render(<LatestReleasesSection sourceId="comixto" />)
       expect(container.firstChild).toBeNull()
@@ -630,7 +677,7 @@
 
     it('renders "No recent updates" when fetch returns empty array', async () => {
       window.ipc = {
-        invoke: vi.fn().mockResolvedValue({ ok: true, data: [] }),
+        invoke: vi.fn().mockResolvedValue({ ok: true, data: [] })
       } as unknown as typeof window.ipc
       render(<LatestReleasesSection sourceId="comixto" />)
       await waitFor(() => expect(screen.getByText('No recent updates')).toBeInTheDocument())
@@ -638,7 +685,7 @@
 
     it('renders "No recent updates" on fetch error', async () => {
       window.ipc = {
-        invoke: vi.fn().mockResolvedValue({ ok: false, error: 'Network error' }),
+        invoke: vi.fn().mockResolvedValue({ ok: false, error: 'Network error' })
       } as unknown as typeof window.ipc
       render(<LatestReleasesSection sourceId="comixto" />)
       await waitFor(() => expect(screen.getByText('No recent updates')).toBeInTheDocument())
@@ -647,10 +694,9 @@
     it('calls sources:getLatestUpdates with the provided sourceId', async () => {
       render(<LatestReleasesSection sourceId="yskcomics" />)
       await waitFor(() => screen.getByText('Solo Leveling'))
-      expect(window.ipc.invoke).toHaveBeenCalledWith(
-        'sources:getLatestUpdates',
-        { sourceId: 'yskcomics' }
-      )
+      expect(window.ipc.invoke).toHaveBeenCalledWith('sources:getLatestUpdates', {
+        sourceId: 'yskcomics'
+      })
     })
   })
   ```
@@ -660,6 +706,7 @@
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "LatestReleasesSection|PASS|FAIL"
   ```
+
   Expected: FAIL.
 
 - [ ] **Step 3: Implement `LatestReleasesSection.tsx`**
@@ -684,9 +731,15 @@
     useEffect(() => {
       let cancelled = false
       invoke('sources:getLatestUpdates', { sourceId })
-        .then(data => { if (!cancelled) setUpdates(data) })
-        .catch(() => { if (!cancelled) setUpdates([]) })
-      return () => { cancelled = true }
+        .then((data) => {
+          if (!cancelled) setUpdates(data)
+        })
+        .catch(() => {
+          if (!cancelled) setUpdates([])
+        })
+      return () => {
+        cancelled = true
+      }
     }, [sourceId])
 
     if (updates === null) return null
@@ -700,7 +753,9 @@
           <p className="text-text-subtle text-sm">No recent updates</p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {updates.map(u => <LatestReleasesCard key={u.seriesId} update={u} />)}
+            {updates.map((u) => (
+              <LatestReleasesCard key={u.seriesId} update={u} />
+            ))}
           </div>
         )}
       </div>
@@ -713,6 +768,7 @@
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "LatestReleasesSection|PASS|FAIL"
   ```
+
   Expected: all PASS.
 
 - [ ] **Step 5: Commit**
@@ -727,6 +783,7 @@
 ## Task 8: Update TopNav — Dark Tokens + ThemeSwitcher
 
 **Files:**
+
 - Modify: `src/renderer/src/components/TopNav.tsx`
 - Modify: `tests/renderer/components/TopNav.test.tsx`
 
@@ -737,6 +794,7 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "TopNav|PASS|FAIL"
   ```
+
   Expected: all PASS.
 
 - [ ] **Step 2: Add a test for ThemeSwitcher presence in TopNav**
@@ -757,6 +815,7 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "Change theme|PASS|FAIL"
   ```
+
   Expected: FAIL — ThemeSwitcher not in TopNav yet.
 
 - [ ] **Step 4: Rewrite `TopNav.tsx` with dark tokens and ThemeSwitcher**
@@ -784,7 +843,7 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
       { id: 'library', label: 'Library' },
       { id: 'sources', label: 'Sources' },
       { id: 'tracking', label: 'Tracking' },
-      { id: 'labels', label: 'Labels' },
+      { id: 'labels', label: 'Labels' }
     ]
 
     useEffect(() => {
@@ -810,7 +869,7 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
           OpenComic
         </span>
 
-        {navItems.map(item => (
+        {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onSectionChange(item.id)}
@@ -831,7 +890,7 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
           <input
             type="search"
             placeholder="Search..."
-            onChange={e => onSearch(e.target.value)}
+            onChange={(e) => onSearch(e.target.value)}
             style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
             className="w-48 px-3 py-1.5 text-sm border border-border rounded-full bg-surface text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
@@ -848,16 +907,29 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
         <ThemeSwitcher />
 
         {/* Settings gear */}
-        <div ref={settingsRef} className="relative ml-1" style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}>
+        <div
+          ref={settingsRef}
+          className="relative ml-1"
+          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+        >
           <button
             type="button"
             aria-label="Settings"
-            onClick={() => setSettingsOpen(o => !o)}
+            onClick={() => setSettingsOpen((o) => !o)}
             className="p-1.5 rounded-md text-text-muted hover:text-text hover:bg-surface-raised transition-colors"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" stroke="currentColor" strokeWidth="1.5"/>
-              <path d="M13.3 6.6 12 6a4.6 4.6 0 0 0-.4-.9l.6-1.3a.7.7 0 0 0-.1-.8l-.9-.9a.7.7 0 0 0-.8-.1L9.1 2.4A4.6 4.6 0 0 0 8.2 2H8a.7.7 0 0 0-.7.5L6.7 4A4.6 4.6 0 0 0 5.8 4.4L4.5 3.8a.7.7 0 0 0-.8.1l-.9.9a.7.7 0 0 0-.1.8L3.3 7 3 8v.2c0 .3.2.6.5.7l1.2.6c.1.3.3.6.4.9l-.6 1.3a.7.7 0 0 0 .1.8l.9.9a.7.7 0 0 0 .8.1l1.3-.6c.3.1.6.3.9.4l.3 1.2c.1.3.4.5.7.5h1.3c.3 0 .6-.2.7-.5l.3-1.2c.3-.1.6-.3.9-.4l1.3.6a.7.7 0 0 0 .8-.1l.9-.9a.7.7 0 0 0 .1-.8L13 9.1A4.6 4.6 0 0 0 13.4 8l1.2-.3a.7.7 0 0 0 .4-.7V6.7a.7.7 0 0 0-.5-.7L13.3 6.6Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+              <path
+                d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M13.3 6.6 12 6a4.6 4.6 0 0 0-.4-.9l.6-1.3a.7.7 0 0 0-.1-.8l-.9-.9a.7.7 0 0 0-.8-.1L9.1 2.4A4.6 4.6 0 0 0 8.2 2H8a.7.7 0 0 0-.7.5L6.7 4A4.6 4.6 0 0 0 5.8 4.4L4.5 3.8a.7.7 0 0 0-.8.1l-.9.9a.7.7 0 0 0-.1.8L3.3 7 3 8v.2c0 .3.2.6.5.7l1.2.6c.1.3.3.6.4.9l-.6 1.3a.7.7 0 0 0 .1.8l.9.9a.7.7 0 0 0 .8.1l1.3-.6c.3.1.6.3.9.4l.3 1.2c.1.3.4.5.7.5h1.3c.3 0 .6-.2.7-.5l.3-1.2c.3-.1.6-.3.9-.4l1.3.6a.7.7 0 0 0 .8-.1l.9-.9a.7.7 0 0 0 .1-.8L13 9.1A4.6 4.6 0 0 0 13.4 8l1.2-.3a.7.7 0 0 0 .4-.7V6.7a.7.7 0 0 0-.5-.7L13.3 6.6Z"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinejoin="round"
+              />
             </svg>
           </button>
 
@@ -872,7 +944,10 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
                 <div className="flex bg-bg rounded-md overflow-hidden text-xs border border-border">
                   <button
                     type="button"
-                    onClick={() => { setScrollMode(false); setSettingsOpen(false) }}
+                    onClick={() => {
+                      setScrollMode(false)
+                      setSettingsOpen(false)
+                    }}
                     data-active={String(!scrollMode)}
                     className={`px-2.5 py-1 font-medium transition-colors ${!scrollMode ? 'bg-accent text-bg' : 'text-text-muted hover:text-text'}`}
                   >
@@ -880,7 +955,10 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setScrollMode(true); setSettingsOpen(false) }}
+                    onClick={() => {
+                      setScrollMode(true)
+                      setSettingsOpen(false)
+                    }}
                     data-active={String(scrollMode)}
                     className={`px-2.5 py-1 font-medium transition-colors ${scrollMode ? 'bg-accent text-bg' : 'text-text-muted hover:text-text'}`}
                   >
@@ -901,6 +979,7 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "TopNav|PASS|FAIL"
   ```
+
   Expected: all PASS (existing + new theme test).
 
 - [ ] **Step 6: Commit**
@@ -915,6 +994,7 @@ The existing TopNav tests check for a Settings button (aria-label "Settings"). T
 ## Task 9: Update CoverCard — Dark Tokens + Hover + Accent Progress
 
 **Files:**
+
 - Modify: `src/renderer/src/components/CoverCard.tsx`
 
 Existing CoverCard tests check title rendering and click handling — both still work after styling changes.
@@ -924,6 +1004,7 @@ Existing CoverCard tests check title rendering and click handling — both still
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "CoverCard|PASS|FAIL"
   ```
+
   Expected: PASS.
 
 - [ ] **Step 2: Replace `CoverCard.tsx` with dark-token version**
@@ -975,6 +1056,7 @@ Existing CoverCard tests check title rendering and click handling — both still
   ```bash
   npm run test:renderer -- --reporter=verbose 2>&1 | grep -E "CoverCard|PASS|FAIL"
   ```
+
   Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -989,6 +1071,7 @@ Existing CoverCard tests check title rendering and click handling — both still
 ## Task 10: Update Library Page — Add LatestReleasesSection + Dark Tokens
 
 **Files:**
+
 - Modify: `src/renderer/src/pages/Library.tsx`
 
 - [ ] **Step 1: Replace `Library.tsx` with the updated version**
@@ -1024,7 +1107,9 @@ Existing CoverCard tests check title rendering and click handling — both still
     const { activeSource, setPendingSeriesOpen } = useSourcesStore()
     const [search, setSearch] = useState('')
 
-    useEffect(() => { loadLibrary() }, [])
+    useEffect(() => {
+      loadLibrary()
+    }, [])
 
     async function loadLibrary() {
       setLoading(true)
@@ -1062,15 +1147,16 @@ Existing CoverCard tests check title rendering and click handling — both still
       }
     }
 
-    function handleOpenFavorite(fav: typeof favorites[number]) {
+    function handleOpenFavorite(fav: (typeof favorites)[number]) {
       setPendingSeriesOpen({ sourceId: fav.sourceId, seriesId: fav.id })
       onSectionChange('sources')
     }
 
     const filtered = search
-      ? comics.filter(c =>
-          c.title.toLowerCase().includes(search.toLowerCase()) ||
-          c.series.toLowerCase().includes(search.toLowerCase())
+      ? comics.filter(
+          (c) =>
+            c.title.toLowerCase().includes(search.toLowerCase()) ||
+            c.series.toLowerCase().includes(search.toLowerCase())
         )
       : comics
 
@@ -1088,8 +1174,11 @@ Existing CoverCard tests check title rendering and click handling — both still
           tabs={tabs}
           activeTabId={activeTabId}
           onSelect={(id) => {
-            const tab = tabs.find(t => t.id === id)
-            if (tab) { setActive(id); onOpenReader(id, tab.pageUrls, tab.title) }
+            const tab = tabs.find((t) => t.id === id)
+            if (tab) {
+              setActive(id)
+              onOpenReader(id, tab.pageUrls, tab.title)
+            }
           }}
           onClose={closeTab}
         />
@@ -1105,7 +1194,7 @@ Existing CoverCard tests check title rendering and click handling — both still
             <div className="px-4 pb-2">
               <h2 className={`${sectionHeading} mb-3`}>Starred</h2>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
-                {favorites.map(fav => (
+                {favorites.map((fav) => (
                   <div key={fav.id} className="relative group">
                     <button
                       onClick={() => handleOpenFavorite(fav)}
@@ -1117,7 +1206,9 @@ Existing CoverCard tests check title rendering and click handling — both still
                             src={fav.coverUrl}
                             alt={fav.title}
                             className="w-full h-full object-cover"
-                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                            onError={(e) => {
+                              ;(e.target as HTMLImageElement).style.display = 'none'
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-text-muted text-xs p-1 leading-tight">
@@ -1125,7 +1216,9 @@ Existing CoverCard tests check title rendering and click handling — both still
                           </div>
                         )}
                       </div>
-                      <span className="text-xs text-text-muted line-clamp-2 w-full leading-tight">{fav.title}</span>
+                      <span className="text-xs text-text-muted line-clamp-2 w-full leading-tight">
+                        {fav.title}
+                      </span>
                     </button>
                     <button
                       onClick={() => removeFavorite(fav.id)}
@@ -1133,7 +1226,12 @@ Existing CoverCard tests check title rendering and click handling — both still
                       className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full items-center justify-center hidden group-hover:flex transition-all"
                     >
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
-                        <path d="M2 2l6 6M8 2L2 8" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                        <path
+                          d="M2 2l6 6M8 2L2 8"
+                          stroke="white"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -1163,6 +1261,7 @@ Existing CoverCard tests check title rendering and click handling — both still
   ```bash
   npm run typecheck
   ```
+
   Expected: no errors.
 
 - [ ] **Step 3: Commit**
@@ -1177,26 +1276,27 @@ Existing CoverCard tests check title rendering and click handling — both still
 ## Task 11: Token Cleanup — Sources.tsx + ReaderView.tsx
 
 **Files:**
+
 - Modify: `src/renderer/src/pages/Sources.tsx`
 - Modify: `src/renderer/src/components/ReaderView.tsx`
 
 **Token mapping** (apply to every matching class in both files):
 
-| Old Tailwind class(es) | New token class |
-|---|---|
-| `bg-gray-50` | `bg-bg` |
-| `bg-white` | `bg-surface` |
-| `bg-gray-100` | `bg-surface-raised` |
-| `border-gray-200`, `border-gray-100` | `border-border` |
-| `text-gray-900`, `text-gray-800` | `text-text` |
-| `text-gray-700`, `text-gray-600` | `text-text-muted` |
-| `text-gray-500`, `text-gray-400` | `text-text-subtle` |
-| `hover:bg-gray-50`, `hover:bg-gray-100` | `hover:bg-surface-raised` |
-| `hover:text-gray-900`, `hover:text-gray-800` | `hover:text-text` |
-| `divide-gray-100` | `divide-border` |
-| `bg-gray-900 text-white` (active pill/tab) | `bg-accent text-bg` |
-| `focus:ring-gray-900` | `focus:ring-accent/50` |
-| `bg-red-50 text-red-700 border-red-200` | `bg-surface-raised border-border text-text-muted` |
+| Old Tailwind class(es)                        | New token class                                   |
+| --------------------------------------------- | ------------------------------------------------- |
+| `bg-gray-50`                                  | `bg-bg`                                           |
+| `bg-white`                                    | `bg-surface`                                      |
+| `bg-gray-100`                                 | `bg-surface-raised`                               |
+| `border-gray-200`, `border-gray-100`          | `border-border`                                   |
+| `text-gray-900`, `text-gray-800`              | `text-text`                                       |
+| `text-gray-700`, `text-gray-600`              | `text-text-muted`                                 |
+| `text-gray-500`, `text-gray-400`              | `text-text-subtle`                                |
+| `hover:bg-gray-50`, `hover:bg-gray-100`       | `hover:bg-surface-raised`                         |
+| `hover:text-gray-900`, `hover:text-gray-800`  | `hover:text-text`                                 |
+| `divide-gray-100`                             | `divide-border`                                   |
+| `bg-gray-900 text-white` (active pill/tab)    | `bg-accent text-bg`                               |
+| `focus:ring-gray-900`                         | `focus:ring-accent/50`                            |
+| `bg-red-50 text-red-700 border-red-200`       | `bg-surface-raised border-border text-text-muted` |
 | `bg-amber-50 text-amber-700 border-amber-200` | `bg-surface-raised border-border text-text-muted` |
 
 **Leave unchanged:** `RATING_BADGE` entries (`bg-green-100`, `bg-blue-100`, `bg-orange-100`, `bg-red-100`) — these are semantic status colors, not layout tokens. The star SVG fill (`#f59e0b`) is also a semantic color and stays.
@@ -1209,13 +1309,14 @@ Existing CoverCard tests check title rendering and click handling — both still
 
   Apply the same mapping. The reader already uses dark colors for the reading area; focus on any toolbar or overlay elements that use `gray-*` or `white`.
 
-- [ ] **Step 3: Verify no layout gray-* classes remain**
+- [ ] **Step 3: Verify no layout gray-\* classes remain**
 
   ```bash
   grep -n "bg-gray\|text-gray\|border-gray\|bg-white\|hover:bg-white\|divide-gray\|focus:ring-gray" \
     src/renderer/src/pages/Sources.tsx \
     src/renderer/src/components/ReaderView.tsx
   ```
+
   Expected: no output (zero matches).
 
 - [ ] **Step 4: Run all renderer tests**
@@ -1223,6 +1324,7 @@ Existing CoverCard tests check title rendering and click handling — both still
   ```bash
   npm run test:renderer
   ```
+
   Expected: all PASS.
 
 - [ ] **Step 5: Typecheck**
@@ -1247,6 +1349,7 @@ Existing CoverCard tests check title rendering and click handling — both still
   ```bash
   npm run test
   ```
+
   Expected: all tests PASS across both main and renderer configs.
 
 - [ ] **Step 2: Typecheck both targets**
@@ -1254,6 +1357,7 @@ Existing CoverCard tests check title rendering and click handling — both still
   ```bash
   npm run typecheck
   ```
+
   Expected: no errors.
 
 - [ ] **Step 3: Start the app and verify manually**

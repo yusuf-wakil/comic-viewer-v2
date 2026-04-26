@@ -21,4 +21,4 @@ export interface ReadingProgress {
   lastRead: number
 }
 
-export type PageUrl = string  // comic-page://{sessionId}/{index}
+export type PageUrl = string // comic-page://{sessionId}/{index}
