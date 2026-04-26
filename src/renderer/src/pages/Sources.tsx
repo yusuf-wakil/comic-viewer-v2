@@ -15,11 +15,10 @@ interface Props {
 
 const SOURCE_LABELS: Record<SourceId, string> = {
   comixto: 'Comix.to',
-  mangakakalot: 'Mangakakalot',
-  readallcomics: 'ReadAllComics'
+  yskcomics: 'YSK Comics'
 }
 
-const ALL_SOURCES: SourceId[] = ['comixto', 'mangakakalot', 'readallcomics']
+const ALL_SOURCES: SourceId[] = ['comixto', 'yskcomics']
 
 const RATING_BADGE: Record<ContentRating, { label: string; className: string }> = {
   'all-ages': { label: 'All Ages', className: 'bg-green-100 text-green-700' },
@@ -94,7 +93,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
       if (reqIdRef.current !== reqId) return
       if (append) setResults([...results, ...data])
       else setResults(data)
-      setHasMore(data.length >= 20)
+      setHasMore(data.length > 0)
     } catch (e) {
       if (reqIdRef.current !== reqId) return
       setError(String(e))
@@ -356,8 +355,8 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
           </div>
         ) : (
           <div>
-            {/* Sort bar shown even while loading */}
-            {!searchQuery && (
+            {/* Sort bar — only for sources that support it */}
+            {!searchQuery && activeSource !== 'yskcomics' && (
               <div className="flex items-center gap-1 px-4 pt-3 pb-1">
                 {(['latest', 'popular', 'rating', 'new'] as BrowseSort[]).map(s => (
                   <button

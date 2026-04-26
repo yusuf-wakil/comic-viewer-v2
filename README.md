@@ -102,11 +102,11 @@ Online sources live in `src/main/sources/`. Each source implements the `SourcePr
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting issues and pull requests.
+See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on submitting issues and pull requests.
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md) for a history of releases and changes.
+See [CHANGELOG.md](docs/CHANGELOG.md) for a history of releases and changes.
 
 ## License
 
