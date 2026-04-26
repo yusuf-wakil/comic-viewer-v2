@@ -8,9 +8,11 @@ interface Props {
   onPrev: () => void
   onClose: () => void
   onPageChange: (page: number) => void
+  scrollMode: boolean
+  onToggleScrollMode: () => void
 }
 
-export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClose, onPageChange }: Props) {
+export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClose, onPageChange, scrollMode, onToggleScrollMode }: Props) {
   const [zoom, setZoom] = useState(1)
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [dragging, setDragging] = useState(false)
@@ -98,7 +100,23 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
         <span className="flex-1 text-center text-white text-sm font-medium truncate px-4">
           {title}
         </span>
-        <div style={{ width: 80 }} />
+        {/* Scroll mode toggle pill */}
+        <div className="flex bg-white/10 rounded-lg overflow-hidden mr-3" style={{ fontSize: 12 }}>
+          <button
+            onClick={() => { if (scrollMode) onToggleScrollMode() }}
+            data-active={String(!scrollMode)}
+            className={`px-3 py-1 font-medium transition-colors ${!scrollMode ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'}`}
+          >
+            Page
+          </button>
+          <button
+            onClick={() => { if (!scrollMode) onToggleScrollMode() }}
+            data-active={String(scrollMode)}
+            className={`px-3 py-1 font-medium transition-colors ${scrollMode ? 'bg-white/20 text-white' : 'text-white/50 hover:text-white/80'}`}
+          >
+            Scroll
+          </button>
+        </div>
       </div>
 
       {/* Image area */}
