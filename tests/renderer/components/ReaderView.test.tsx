@@ -77,3 +77,22 @@ describe('ReaderView – scroll mode body', () => {
     expect(images[0]).toHaveAttribute('src', 'comic-page://a/2')
   })
 })
+
+describe('ReaderView – bottom bar', () => {
+  it('shows Prev/Next buttons in page mode', () => {
+    render(<ReaderView {...baseProps} scrollMode={false} />)
+    expect(screen.getAllByRole('button', { name: /prev/i }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('button', { name: /next/i }).length).toBeGreaterThan(0)
+  })
+
+  it('shows page counter text in scroll mode', () => {
+    render(<ReaderView {...baseProps} scrollMode={true} />)
+    expect(screen.getByText(/page 1 of 3/i)).toBeInTheDocument()
+  })
+
+  it('does not show Prev/Next buttons in scroll mode', () => {
+    render(<ReaderView {...baseProps} scrollMode={true} />)
+    expect(screen.queryByRole('button', { name: '← Prev' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Next →' })).not.toBeInTheDocument()
+  })
+})

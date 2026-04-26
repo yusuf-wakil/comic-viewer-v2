@@ -13,11 +13,9 @@ interface Props {
 
 export function Reader({ comicId, pageUrls, title, onClose }: Props) {
   const { invoke } = useIpc()
-  const { currentPage, next, prev } = useReaderStore()
-  // Use a selector so this component doesn't re-render when unrelated tab state changes
+  const { currentPage, next, prev, scrollMode, setScrollMode } = useReaderStore()
   const updatePage = useTabsStore(s => s.updatePage)
 
-  // Stable invoke ref so useCallback deps don't need to include invoke (which is unstable)
   const invokeRef = useRef(invoke)
   invokeRef.current = invoke
 
@@ -39,6 +37,8 @@ export function Reader({ comicId, pageUrls, title, onClose }: Props) {
       onPrev={prev}
       onClose={onClose}
       onPageChange={handlePageChange}
+      scrollMode={scrollMode}
+      onToggleScrollMode={() => setScrollMode(!scrollMode)}
     />
   )
 }

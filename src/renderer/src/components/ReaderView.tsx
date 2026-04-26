@@ -19,7 +19,7 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
   const dragRef = useRef({ startX: 0, startY: 0, panX: 0, panY: 0 })
   const containerRef = useRef<HTMLDivElement>(null)
   const pageRefs = useRef<(HTMLImageElement | null)[]>([])
-  const [, setVisiblePage] = useState(0)
+  const [visiblePage, setVisiblePage] = useState(0)
 
   // Reset zoom/pan when navigating pages
   useEffect(() => {
@@ -28,10 +28,14 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
   }, [currentPage])
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (scrollMode) {
+      if (e.key === 'Escape') onClose()
+      return
+    }
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') onNext()
     else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') onPrev()
     else if (e.key === 'Escape') onClose()
-  }, [onNext, onPrev, onClose])
+  }, [onNext, onPrev, onClose, scrollMode])
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
@@ -234,23 +238,33 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
 
       {/* Bottom bar */}
       <div className="flex items-center justify-center gap-6 px-4 py-3 bg-black/90 border-t border-white/10 flex-shrink-0">
-        <button
-          onClick={onPrev}
-          disabled={isFirst}
-          className="text-white/70 hover:text-white disabled:opacity-20 text-sm font-medium transition-colors px-3 py-1 rounded hover:bg-white/10"
-        >
-          ← Prev
-        </button>
-        <span className="text-white text-sm font-medium tabular-nums min-w-[5rem] text-center">
-          {currentPage + 1} / {pageUrls.length}
-        </span>
-        <button
-          onClick={onNext}
-          disabled={isLast}
-          className="text-white/70 hover:text-white disabled:opacity-20 text-sm font-medium transition-colors px-3 py-1 rounded hover:bg-white/10"
-        >
-          Next →
-        </button>
+        {scrollMode ? (
+          <span className="text-white text-sm font-medium tabular-nums">
+            Page {visiblePage + 1} of {pageUrls.length}
+          </span>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onPrev}
+              disabled={isFirst}
+              className="text-white/70 hover:text-white disabled:opacity-20 text-sm font-medium transition-colors px-3 py-1 rounded hover:bg-white/10"
+            >
+              ← Prev
+            </button>
+            <span className="text-white text-sm font-medium tabular-nums min-w-[5rem] text-center">
+              {currentPage + 1} / {pageUrls.length}
+            </span>
+            <button
+              type="button"
+              onClick={onNext}
+              disabled={isLast}
+              className="text-white/70 hover:text-white disabled:opacity-20 text-sm font-medium transition-colors px-3 py-1 rounded hover:bg-white/10"
+            >
+              Next →
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
