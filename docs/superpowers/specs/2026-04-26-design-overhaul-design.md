@@ -10,7 +10,7 @@
 The app currently has a functional but visually bare UI with no consistent color system and a library grid that shows only covers with no update information. The goal is a cleaner, more polished dark-first design with:
 
 - A proper color system that supports user-switchable accent colors
-- A redesigned home screen that leads with latest chapter releases (timestamps + multi-chapter per title, à la MangaKakalot)
+- A redesigned home screen that leads with latest chapter releases (with timestamps)
 - A cleaner library grid below the releases section
 - A theme switcher accessible from the top nav
 
@@ -52,9 +52,10 @@ Stored as `--color-accent` on the `<html>` element. Persisted to `localStorage` 
 
 ### Tailwind 4.x Wiring
 
-Tailwind CSS 4.x does not use `tailwind.config.js` for theme extension. All custom tokens are defined in an `@theme {}` block inside `src/renderer/src/index.css`:
+Tailwind CSS 4.x does not use `tailwind.config.js` for theme extension. All custom tokens are defined in `src/renderer/src/index.css`. The `:root` block **must appear before** the `@theme` block in the file — the self-referencing `var()` pattern only works because `:root` is resolved first:
 
 ```css
+/* 1. Define concrete values on :root */
 :root {
   --color-bg: #0d0f14;
   --color-surface: #161920;
@@ -63,9 +64,10 @@ Tailwind CSS 4.x does not use `tailwind.config.js` for theme extension. All cust
   --color-text: #f0f2f8;
   --color-text-muted: #8b91a0;
   --color-text-subtle: #555b6a;
-  --color-accent: #2dd4bf; /* overwritten at runtime */
+  --color-accent: #2dd4bf; /* overwritten at runtime by ThemeSwitcher */
 }
 
+/* 2. Wire into Tailwind — must come after :root */
 @theme {
   --color-bg: var(--color-bg);
   --color-surface: var(--color-surface);
@@ -78,14 +80,14 @@ Tailwind CSS 4.x does not use `tailwind.config.js` for theme extension. All cust
 }
 ```
 
-This allows standard Tailwind utilities like `bg-surface`, `text-accent`, `border-border` to work across all components.
+This enables utilities like `bg-surface`, `text-accent`, `border-border` across all components.
 
-### ThemeSwitcher Initialization (no flash)
+### ThemeSwitcher Initialization (no flash-of-default)
 
-CSS cannot read `localStorage`. To avoid a flash-of-default-color on first paint, a small inline script must run in `index.html` before React mounts:
+CSS cannot read `localStorage`. To avoid a visible color flash on first paint, a small inline script must run in `index.html` **before any stylesheets**:
 
 ```html
-<!-- index.html <head>, before any stylesheets -->
+<!-- index.html <head> — before stylesheet links -->
 <script>
   const accent = localStorage.getItem('opencomic-accent');
   if (accent) document.documentElement.style.setProperty('--color-accent', accent);
@@ -98,34 +100,37 @@ CSS cannot read `localStorage`. To avoid a flash-of-default-color on first paint
 
 ## Data Model Extension
 
-The existing `SeriesResult` type (`src/shared/types/source.ts`) has only `latestChapter?: string` — one chapter, no timestamps. The Latest Releases section requires multiple recent chapters per title with dates.
+The existing `SeriesResult` type (`src/shared/types/source.ts`) has only `latestChapter?: string` (a single chapter label, no timestamp). The Latest Releases section needs timestamps.
 
-### New type
+**Data constraint:** The comixto browse API (`/api/v2/manga?sort=latest`) returns one latest chapter number per series plus an `updated_at` timestamp. Getting a full multi-chapter history per series requires an expensive `getSeries()` call per item. For this release, `LatestUpdate` models what browse data can provide: one chapter + one timestamp. Multi-chapter history is a future enhancement.
 
-Add to `src/shared/types/source.ts`:
+### New type — add to `src/shared/types/source.ts`
 
 ```ts
 export interface LatestUpdate {
   seriesId: string
   title: string
   coverUrl: string
-  recentChapters: Array<{ number: string; date: string }>  // up to 3, newest first
+  recentChapters: Array<{ number: string; date: string }>  // 1 entry in practice (browse API limit)
 }
 ```
 
-### New IPC channel
-
-Add `getLatestUpdates` to `src/shared/ipc/types.ts`:
+### New IPC channel — add to `src/shared/ipc/types.ts`
 
 ```ts
-getLatestUpdates: () => Promise<LatestUpdate[]>
+'sources:getLatestUpdates': { req: { sourceId: SourceId }; res: IpcResult<LatestUpdate[]> }
 ```
 
-Each source (`comixto.ts`, `yskcomics.ts`) implements this by fetching with `sort: 'latest'` and returning the top results with their recent chapter data. The main process handler in `src/main/ipc/handlers.ts` calls the active source's implementation.
+### Main process handler — `src/main/ipc/handlers.ts`
 
-### Fallback
+The handler calls `provider.browse(1, 'latest')`, maps `MangaItem.updated_at` into `recentChapters`, slices to the first 10 results, and returns them. Slicing happens in the handler, not the renderer.
 
-If the fetch fails or returns empty, `LatestReleasesSection` shows a muted "No recent updates" message. No spinner — the library grid remains visible immediately.
+### Source implementations
+
+Each source populates `recentChapters` from the data available in its browse response:
+
+- **comixto:** map `MangaItem.last_chapter`/`latest_chapter` as `number` and `updated_at` (unix timestamp → ISO date string) as `date`
+- **yskcomics:** equivalent mapping from that source's browse response fields
 
 ---
 
@@ -141,11 +146,9 @@ If the fetch fails or returns empty, `LatestReleasesSection` shows a muted "No r
 │  LATEST RELEASES                                │
 │  ┌──────────────────┐  ┌──────────────────┐     │
 │  │ [cover] Title    │  │ [cover] Title    │     │
-│  │  • Ch. 57  2m    │  │  • Ch. 20  1m   │     │
-│  │  • Ch. 56  5m    │  │  • Ch. 19  8m   │     │
-│  │  • Ch. 55  1h    │  │  • Ch. 18  2h   │     │
+│  │  • Ch. 120  3h   │  │  • Ch. 57  1m   │     │
 │  └──────────────────┘  └──────────────────┘     │
-│  (top 10 entries, vertical growth, no scroll)   │
+│  (top 10 entries, 2-col grid, vertical growth)  │
 │                                                 │
 │  ─────────────────────────────────────────      │
 │                                                 │
@@ -158,9 +161,9 @@ If the fetch fails or returns empty, `LatestReleasesSection` shows a muted "No r
 ```
 
 - No sidebar — full-width, clean
-- Latest Releases shows the top 10 entries, grows vertically (no horizontal scroll)
-- Section headings: `text-xs tracking-widest uppercase text-text-muted font-semibold` — applied consistently to both "LATEST RELEASES" and "YOUR LIBRARY"
-- Clear visual divider (`border-t border-border`) between the two sections
+- Latest Releases: top 10 entries, 2-column grid, grows vertically (no horizontal scroll)
+- Section headings use `text-xs tracking-widest uppercase text-text-muted font-semibold` — applied identically to both "LATEST RELEASES" and "YOUR LIBRARY"
+- Divider: `border-t border-border my-6`
 
 ---
 
@@ -168,48 +171,46 @@ If the fetch fails or returns empty, `LatestReleasesSection` shows a muted "No r
 
 ### Modified
 
-#### `src/renderer/src/index.css`
-- Add `:root {}` CSS custom properties for all color tokens
-- Add `@theme {}` block wiring tokens into Tailwind
-- Add inline-script note (the actual script goes in `index.html`)
-
 #### `src/renderer/src/index.html`
-- Add inline `<script>` in `<head>` to restore accent from `localStorage` before paint
+- Add inline `<script>` in `<head>` (before stylesheets) to restore accent from `localStorage`
+
+#### `src/renderer/src/index.css`
+- Add `:root {}` block with all color tokens
+- Add `@theme {}` block wiring tokens into Tailwind (`:root` must precede `@theme`)
 
 #### `TopNav.tsx` (`src/renderer/src/components/TopNav.tsx`)
-- Adds `<ThemeSwitcher />` icon button (palette icon, `lucide-react` or equivalent) at top-right
-- Search input: pill shape (`rounded-full`), `bg-surface` background, `border-border`
-- Reduced visual weight: lighter border, tighter padding
+- Add `<ThemeSwitcher />` icon button (palette icon) at top-right
+- Search input: `rounded-full bg-surface border border-border`
+- Lighter visual weight: reduce border prominence, tighten padding
 
 #### `CoverCard.tsx` (`src/renderer/src/components/CoverCard.tsx`)
-- Progress bar: `bg-accent` instead of hardcoded color
+- Progress bar: `bg-accent`
 - Title: `line-clamp-2`
 - Hover: `hover:scale-[1.02] hover:shadow-lg transition-transform duration-150 ease-out`
 - `rounded-xl`, tighter padding
 
 #### `Library.tsx` (`src/renderer/src/pages/Library.tsx`)
-- Renders `<LatestReleasesSection />` above the existing `<CoverGrid />`
-- Section heading classes applied consistently (see above)
+- Render `<LatestReleasesSection />` above `<CoverGrid />`
+- Apply shared section heading class to both section labels
 
 ### New
 
 #### `LatestReleasesCard.tsx` (`src/renderer/src/components/LatestReleasesCard.tsx`)
-- Layout: cover thumbnail left (`w-11 h-16`, `rounded-md`, `object-cover`) + info column right
-- Title: `font-semibold text-text`, `line-clamp-1`
-- Chapter rows (up to 3): chapter number in `text-accent font-semibold text-sm` + relative timestamp in `text-text-subtle text-xs`
-- "Updated X ago" summary below chapters in `text-text-subtle text-xs`
+- Layout: cover thumbnail left (`w-11 h-16 rounded-md object-cover flex-shrink-0`) + info column right
+- Title: `font-semibold text-text line-clamp-1`
+- Chapter row: chapter number in `text-accent font-semibold text-sm` + timestamp in `text-text-subtle text-xs`
 - Card: `bg-surface border border-border rounded-xl p-3`
 
 #### `LatestReleasesSection.tsx` (`src/renderer/src/components/LatestReleasesSection.tsx`)
-- On mount: calls `window.api.getLatestUpdates()` via `useIpc` hook pattern (matches existing `src/renderer/src/hooks/useIpc.ts`)
-- 2-column responsive grid (`grid grid-cols-2 gap-3`)
-- Shows top 10 `LatestUpdate` entries, grows vertically
-- Fallback: muted "No recent updates" text if fetch fails or returns empty
+- On mount: calls `invoke('sources:getLatestUpdates', { sourceId: activeSource })` via `useIpc` hook
+- Render: `null` while loading (no spinner — library grid below remains visible)
+- On data: 2-column grid (`grid grid-cols-2 gap-3`) of `<LatestReleasesCard />`
+- On error or empty: single muted line "No recent updates"
 
 #### `ThemeSwitcher.tsx` (`src/renderer/src/components/ThemeSwitcher.tsx`)
 - Palette icon button in TopNav
-- On click: popover with 5 accent color circles (`w-6 h-6 rounded-full`)
-- Active accent: white ring border (`ring-2 ring-white`)
+- On click: popover (`bg-surface-raised border border-border rounded-lg p-2`) with 5 accent color circles (`w-6 h-6 rounded-full`)
+- Active circle: `ring-2 ring-white ring-offset-1 ring-offset-surface-raised`
 - On select: `document.documentElement.style.setProperty('--color-accent', value)` + `localStorage.setItem('opencomic-accent', value)`
 - Does NOT handle init/restore — that belongs in `index.html`
 
@@ -220,16 +221,17 @@ If the fetch fails or returns empty, `LatestReleasesSection` shows a muted "No r
 - Login / signup UI (future milestone)
 - Light mode (future — dark-only for now)
 - Hero/featured banner (future)
-- Reader or Sources layout changes (color tokens applied but no structural changes)
+- Multi-chapter history per series in Latest Releases (requires expensive per-series API calls — future enhancement)
+- Reader or Sources layout changes (color tokens applied, no structural changes)
 
 ---
 
 ## Verification
 
-1. **Color system:** All text, backgrounds, and borders across all screens use the new CSS token utilities (`bg-surface`, `text-accent`, etc.) — no hardcoded hex or Tailwind color-scale values in modified files
-2. **Accent switching:** Toggle each of the 5 accent colors via ThemeSwitcher — progress bars, chapter numbers, and active states all update immediately without reload
-3. **Persistence:** Close and reopen the app — the last selected accent color is restored with no visible flash
-4. **Latest Releases:** Section appears above the library grid, showing cover + up to 3 chapters + relative timestamps per entry, capped at 10 entries
-5. **Library grid:** Existing comics display correctly with updated CoverCard styling (accent progress bar, hover scale, rounded corners)
-6. **TopNav:** Theme switcher icon is visible and the popover opens/closes correctly; search input renders with pill shape
-7. **Reader and Sources:** Audit that text, background, and border classes in both views reference color tokens, not hardcoded values
+1. **Color tokens:** In all modified files, text/background/border classes reference color tokens (`bg-surface`, `text-accent`, `border-border`, etc.) — no hardcoded hex values or Tailwind color-scale classes (e.g., `gray-800`)
+2. **Accent switching:** Toggle each of the 5 accent colors via ThemeSwitcher — progress bars, chapter numbers, and active states update immediately without reload
+3. **Persistence (no flash):** Close and reopen the app — the last accent color is restored with no visible color flash before React mounts
+4. **Latest Releases:** Section appears above the library grid showing cover + latest chapter + timestamp per entry, capped at 10 entries; renders `null` while loading
+5. **Library grid:** CoverCard renders with accent-colored progress bar, 2-line title clamp, and smooth hover scale
+6. **TopNav:** ThemeSwitcher popover opens and closes correctly; search input has pill shape
+7. **Reader and Sources:** Audit that all text/background/border classes in both views use color tokens, not hardcoded values
