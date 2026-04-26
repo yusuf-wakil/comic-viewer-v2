@@ -5,9 +5,18 @@ import { CoverCard } from '../../../src/renderer/src/components/CoverCard'
 import type { Comic } from '../../../src/shared/types/comic'
 
 const comic: Comic = {
-  id: '1', path: '/a.cbz', title: 'Batman #1', series: 'Batman',
-  issueNumber: 1, coverPath: null, format: 'cbz', pageCount: 24,
-  publisher: 'DC', year: 2022, genres: [], addedAt: Date.now()
+  id: '1',
+  path: '/a.cbz',
+  title: 'Batman #1',
+  series: 'Batman',
+  issueNumber: 1,
+  coverPath: null,
+  format: 'cbz',
+  pageCount: 24,
+  publisher: 'DC',
+  year: 2022,
+  genres: [],
+  addedAt: Date.now()
 }
 
 describe('CoverCard', () => {

@@ -1,7 +1,15 @@
 import { ipcMain, dialog, BrowserWindow, net } from 'electron'
 import { createHash } from 'node:crypto'
 import { getDb } from '../storage/db'
-import { insertComic, getAllComics, removeComic, upsertProgress, getProgress, getSetting, setSetting } from '../storage/queries'
+import {
+  insertComic,
+  getAllComics,
+  removeComic,
+  upsertProgress,
+  getProgress,
+  getSetting,
+  setSetting
+} from '../storage/queries'
 import { scanFolder } from '../library/scanner'
 import { extractPages } from '../readers/cbz'
 import { storePages, storeLazyPages } from '../protocol/comic-page'
@@ -22,7 +30,8 @@ function handle<C extends keyof IpcChannels>(channel: C, fn: Handler<C>): void {
 }
 
 export function registerHandlers(): void {
-  const electronFetch: Fetcher = (url, init) => net.fetch(url, init as RequestInit) as Promise<Response>
+  const electronFetch: Fetcher = (url, init) =>
+    net.fetch(url, init as RequestInit) as Promise<Response>
   register(comixtoProvider)
   register(yskComicsProvider)
 
@@ -57,7 +66,9 @@ export function registerHandlers(): void {
 
   handle('reader:open', async (_e, { comicId }) => {
     try {
-      const comic = db.prepare('SELECT path, format FROM comics WHERE id = ?').get(comicId) as { path: string; format: string } | undefined
+      const comic = db.prepare('SELECT path, format FROM comics WHERE id = ?').get(comicId) as
+        | { path: string; format: string }
+        | undefined
       if (!comic) return { ok: false, error: 'Comic not found' }
       let pages: Buffer[] = []
       if (comic.format === 'cbz' || comic.format === 'cbr') {
@@ -65,11 +76,17 @@ export function registerHandlers(): void {
       } else {
         return { ok: false, error: `Format ${comic.format} not yet supported` }
       }
-      const sessionId = createHash('sha1').update(comicId + Date.now()).digest('hex').slice(0, 12)
+      const sessionId = createHash('sha1')
+        .update(comicId + Date.now())
+        .digest('hex')
+        .slice(0, 12)
       storePages(sessionId, pages)
       const urls = pages.map((_, i) => `comic-page://${sessionId}/${i}`)
       if (pages.length > 0) {
-        db.prepare('UPDATE comics SET page_count = ? WHERE id = ? AND page_count = 0').run(pages.length, comicId)
+        db.prepare('UPDATE comics SET page_count = ? WHERE id = ? AND page_count = 0').run(
+          pages.length,
+          comicId
+        )
       }
       return { ok: true, data: urls }
     } catch (e) {
@@ -79,7 +96,9 @@ export function registerHandlers(): void {
 
   handle('reader:progress', async (_e, { comicId, page }) => {
     try {
-      const comic = db.prepare('SELECT page_count FROM comics WHERE id = ?').get(comicId) as { page_count: number } | undefined
+      const comic = db.prepare('SELECT page_count FROM comics WHERE id = ?').get(comicId) as
+        | { page_count: number }
+        | undefined
       const totalPages = comic?.page_count ?? 0
       upsertProgress(db, {
         comicId,
@@ -150,16 +169,18 @@ export function registerHandlers(): void {
         Array.from({ length: numPages }, (_, i) => get(sourceId).browse(i + 1, 'latest'))
       )
       const all = pages.flat()
-      const withChapter = all.filter(r => r.latestChapter)
-      const sorted = [...withChapter].sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
+      const withChapter = all.filter((r) => r.latestChapter)
+      const sorted = [...withChapter].sort((a, b) =>
+        (b.updatedAt ?? '').localeCompare(a.updatedAt ?? '')
+      )
       const top = (sorted.length > 0 ? sorted : withChapter).slice(0, 10)
-      const updates: LatestUpdate[] = top.map(r => ({
+      const updates: LatestUpdate[] = top.map((r) => ({
         seriesId: r.id,
         title: r.title,
         coverUrl: r.coverUrl,
         recentChapters: r.latestChapter
           ? [{ number: r.latestChapter.replace(/^Ch\.\s*/i, ''), date: r.updatedAt ?? '' }]
-          : [],
+          : []
       }))
       return { ok: true, data: updates }
     } catch (e) {
@@ -198,17 +219,22 @@ export function registerHandlers(): void {
       const provider = get(sourceId)
       const pageEntries = await provider.getChapterPages(chapterId)
       console.log('[handlers] openChapter got', pageEntries.length, 'pages for', chapterId)
-      const sessionId = createHash('sha1').update(sourceId + chapterId + Date.now()).digest('hex').slice(0, 12)
+      const sessionId = createHash('sha1')
+        .update(sourceId + chapterId + Date.now())
+        .digest('hex')
+        .slice(0, 12)
       // Defer fetch until protocol handler requests each page (avoids concurrent CDP/fetch conflicts)
-      const lazyPages = pageEntries.map(entry => {
+      const lazyPages = pageEntries.map((entry) => {
         let p: Promise<Buffer> | null = null
         const start = (): Promise<Buffer> => {
           if (p) return p
           p = (async () => {
             if (provider.fetchPageBuffer) return provider.fetchPageBuffer(entry.url)
-            const resp = await electronFetch(entry.url, { headers: { 'User-Agent': 'Mozilla/5.0' } })
+            const resp = await electronFetch(entry.url, {
+              headers: { 'User-Agent': 'Mozilla/5.0' }
+            })
             if (!resp.ok) throw new Error(`Image fetch failed: ${resp.status}`)
-            return Buffer.from(await resp.arrayBuffer() as ArrayBuffer)
+            return Buffer.from((await resp.arrayBuffer()) as ArrayBuffer)
           })()
           return p
         }

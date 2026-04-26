@@ -2,8 +2,12 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import Database from 'better-sqlite3'
 import { applyMigrations } from '../../../src/main/storage/db'
 import {
-  insertComic, getComicById, getAllComics, removeComic,
-  upsertProgress, getProgress
+  insertComic,
+  getComicById,
+  getAllComics,
+  removeComic,
+  upsertProgress,
+  getProgress
 } from '../../../src/main/storage/queries'
 import type { Comic } from '../../../src/shared/types/comic'
 
@@ -55,7 +59,13 @@ describe('comics', () => {
 describe('reading progress', () => {
   it('upserts and retrieves progress', () => {
     insertComic(db, testComic)
-    upsertProgress(db, { comicId: 'test-1', currentPage: 5, totalPages: 24, completed: false, lastRead: Date.now() })
+    upsertProgress(db, {
+      comicId: 'test-1',
+      currentPage: 5,
+      totalPages: 24,
+      completed: false,
+      lastRead: Date.now()
+    })
     const p = getProgress(db, 'test-1')
     expect(p?.currentPage).toBe(5)
     expect(p?.completed).toBe(false)
@@ -63,8 +73,20 @@ describe('reading progress', () => {
 
   it('updates progress on second upsert', () => {
     insertComic(db, testComic)
-    upsertProgress(db, { comicId: 'test-1', currentPage: 5, totalPages: 24, completed: false, lastRead: Date.now() })
-    upsertProgress(db, { comicId: 'test-1', currentPage: 23, totalPages: 24, completed: true, lastRead: Date.now() })
+    upsertProgress(db, {
+      comicId: 'test-1',
+      currentPage: 5,
+      totalPages: 24,
+      completed: false,
+      lastRead: Date.now()
+    })
+    upsertProgress(db, {
+      comicId: 'test-1',
+      currentPage: 23,
+      totalPages: 24,
+      completed: true,
+      lastRead: Date.now()
+    })
     expect(getProgress(db, 'test-1')?.currentPage).toBe(23)
   })
 })

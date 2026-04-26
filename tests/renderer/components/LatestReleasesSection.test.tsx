@@ -4,20 +4,30 @@ import { LatestReleasesSection } from '../../../src/renderer/src/components/Late
 import type { LatestUpdate } from '../../../src/shared/types/source'
 
 const mockUpdates: LatestUpdate[] = [
-  { seriesId: '1', title: 'Solo Leveling', coverUrl: '', recentChapters: [{ number: 'Ch. 201', date: '2024-03-01' }] },
-  { seriesId: '2', title: 'Jujutsu Kaisen', coverUrl: '', recentChapters: [{ number: 'Ch. 265', date: '2024-02-28' }] },
+  {
+    seriesId: '1',
+    title: 'Solo Leveling',
+    coverUrl: '',
+    recentChapters: [{ number: 'Ch. 201', date: '2024-03-01' }]
+  },
+  {
+    seriesId: '2',
+    title: 'Jujutsu Kaisen',
+    coverUrl: '',
+    recentChapters: [{ number: 'Ch. 265', date: '2024-02-28' }]
+  }
 ]
 
 beforeEach(() => {
   window.ipc = {
-    invoke: vi.fn().mockResolvedValue({ ok: true, data: mockUpdates }),
+    invoke: vi.fn().mockResolvedValue({ ok: true, data: mockUpdates })
   } as unknown as typeof window.ipc
 })
 
 describe('LatestReleasesSection', () => {
   it('renders null while loading (no spinner visible)', () => {
     window.ipc = {
-      invoke: vi.fn().mockReturnValue(new Promise(() => {})), // never resolves
+      invoke: vi.fn().mockReturnValue(new Promise(() => {})) // never resolves
     } as unknown as typeof window.ipc
     const { container } = render(<LatestReleasesSection sourceId="comixto" />)
     expect(container.firstChild).toBeNull()
@@ -31,7 +41,7 @@ describe('LatestReleasesSection', () => {
 
   it('renders "No recent updates" when fetch returns empty array', async () => {
     window.ipc = {
-      invoke: vi.fn().mockResolvedValue({ ok: true, data: [] }),
+      invoke: vi.fn().mockResolvedValue({ ok: true, data: [] })
     } as unknown as typeof window.ipc
     render(<LatestReleasesSection sourceId="comixto" />)
     await waitFor(() => expect(screen.getByText('No recent updates')).toBeInTheDocument())
@@ -39,7 +49,7 @@ describe('LatestReleasesSection', () => {
 
   it('renders "No recent updates" on fetch error', async () => {
     window.ipc = {
-      invoke: vi.fn().mockResolvedValue({ ok: false, error: 'Network error' }),
+      invoke: vi.fn().mockResolvedValue({ ok: false, error: 'Network error' })
     } as unknown as typeof window.ipc
     render(<LatestReleasesSection sourceId="comixto" />)
     await waitFor(() => expect(screen.getByText('No recent updates')).toBeInTheDocument())
@@ -48,9 +58,8 @@ describe('LatestReleasesSection', () => {
   it('calls sources:getLatestUpdates with the provided sourceId', async () => {
     render(<LatestReleasesSection sourceId="yskcomics" />)
     await waitFor(() => screen.getByText('Solo Leveling'))
-    expect(window.ipc.invoke).toHaveBeenCalledWith(
-      'sources:getLatestUpdates',
-      { sourceId: 'yskcomics' }
-    )
+    expect(window.ipc.invoke).toHaveBeenCalledWith('sources:getLatestUpdates', {
+      sourceId: 'yskcomics'
+    })
   })
 })

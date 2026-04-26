@@ -12,7 +12,7 @@ export function TabBar({ tabs, activeTabId, onSelect, onClose }: Props) {
 
   return (
     <div className="flex items-center gap-1 px-2 h-9 bg-gray-50 border-b border-gray-200 overflow-x-auto">
-      {tabs.map(tab => (
+      {tabs.map((tab) => (
         <div
           key={tab.id}
           className={`flex items-center gap-1 px-3 py-1 rounded text-xs font-medium cursor-pointer max-w-[180px] flex-shrink-0 transition-colors ${
@@ -24,7 +24,10 @@ export function TabBar({ tabs, activeTabId, onSelect, onClose }: Props) {
         >
           <span className="truncate">{tab.title}</span>
           <button
-            onClick={e => { e.stopPropagation(); onClose(tab.id) }}
+            onClick={(e) => {
+              e.stopPropagation()
+              onClose(tab.id)
+            }}
             className="ml-1 text-gray-400 hover:text-gray-600 flex-shrink-0"
           >
             ×

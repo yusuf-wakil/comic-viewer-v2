@@ -8,7 +8,7 @@ import { useReaderStore } from '../../../src/renderer/src/store/reader'
 const baseProps = {
   activeSection: 'library' as const,
   onSectionChange: vi.fn(),
-  onAddFolder: vi.fn(),
+  onAddFolder: vi.fn()
 }
 
 beforeEach(() => {

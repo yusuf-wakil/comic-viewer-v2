@@ -20,9 +20,10 @@ export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set, get) => ({
       favorites: [],
-      addFavorite: (item) => set(s => ({ favorites: [...s.favorites.filter(f => f.id !== item.id), item] })),
-      removeFavorite: (id) => set(s => ({ favorites: s.favorites.filter(f => f.id !== id) })),
-      isFavorite: (id) => get().favorites.some(f => f.id === id),
+      addFavorite: (item) =>
+        set((s) => ({ favorites: [...s.favorites.filter((f) => f.id !== item.id), item] })),
+      removeFavorite: (id) => set((s) => ({ favorites: s.favorites.filter((f) => f.id !== id) })),
+      isFavorite: (id) => get().favorites.some((f) => f.id === id)
     }),
     { name: 'opencomic-favorites' }
   )

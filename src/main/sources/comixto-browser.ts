@@ -37,7 +37,7 @@ export class ComixBrowser {
       if (!this.win) return
       const url = this.win.webContents.getURL()
       const title = this.win.getTitle()
-      const isCF = CF_INDICATORS.some(s => url.includes(s) || title.includes(s))
+      const isCF = CF_INDICATORS.some((s) => url.includes(s) || title.includes(s))
       if (!isCF && this.cfResolve) {
         this.clearCfTimeout()
         const cb = this.cfResolve
@@ -51,12 +51,17 @@ export class ComixBrowser {
     this.win.webContents.on('console-message', (_e, _level, msg) => {
       if (msg.startsWith('[comixto-browser]')) console.log(msg)
     })
-    this.win.on('closed', () => { this.win = null })
+    this.win.on('closed', () => {
+      this.win = null
+    })
     return this.win
   }
 
   private clearCfTimeout(): void {
-    if (this.cfTimeout) { clearTimeout(this.cfTimeout); this.cfTimeout = null }
+    if (this.cfTimeout) {
+      clearTimeout(this.cfTimeout)
+      this.cfTimeout = null
+    }
   }
 
   private challengeSession(): Promise<void> {
@@ -74,7 +79,14 @@ export class ComixBrowser {
       win.center()
       win.loadURL(BASE_URL)
     })
-    this.cfPending.then(() => { this.cfPending = null }, () => { this.cfPending = null })
+    this.cfPending.then(
+      () => {
+        this.cfPending = null
+      },
+      () => {
+        this.cfPending = null
+      }
+    )
     return this.cfPending
   }
 
@@ -86,7 +98,10 @@ export class ComixBrowser {
     const ses = this.getSession() as any
     const cookies = await this.getSession().cookies.get({ domain: 'comix.to' })
     const cookieHeader = cookies.map((c: Electron.Cookie) => `${c.name}=${c.value}`).join('; ')
-    const mergedHeaders = { ...(init?.headers as Record<string, string> ?? {}), Cookie: cookieHeader }
+    const mergedHeaders = {
+      ...((init?.headers as Record<string, string>) ?? {}),
+      Cookie: cookieHeader
+    }
     const mergedInit = { ...init, headers: mergedHeaders }
     const resp: Response = await ses.fetch(url, mergedInit)
     if (resp.status === 403 || resp.status === 503) {
@@ -94,7 +109,10 @@ export class ComixBrowser {
       await this.challengeSession()
       const cookies2 = await this.getSession().cookies.get({ domain: 'comix.to' })
       const cookieHeader2 = cookies2.map((c: Electron.Cookie) => `${c.name}=${c.value}`).join('; ')
-      return ses.fetch(url, { ...mergedInit, headers: { ...mergedHeaders, Cookie: cookieHeader2 } }) as Promise<Response>
+      return ses.fetch(url, {
+        ...mergedInit,
+        headers: { ...mergedHeaders, Cookie: cookieHeader2 }
+      }) as Promise<Response>
     }
     return resp
   }
@@ -103,8 +121,11 @@ export class ComixBrowser {
    *  then navigate away to free memory. The script may return a Promise. */
   async navigateAndRun<T>(url: string, script: string): Promise<T> {
     // Cancel any ongoing chapter-list capture so the window is free
-    if (this.cancelCapture) { this.cancelCapture(); this.cancelCapture = null }
-    await new Promise(r => setTimeout(r, 200)) // brief yield for cleanup
+    if (this.cancelCapture) {
+      this.cancelCapture()
+      this.cancelCapture = null
+    }
+    await new Promise((r) => setTimeout(r, 200)) // brief yield for cleanup
     await this.challengeSession()
     const win = this.ensureWindow()
 
@@ -116,7 +137,7 @@ export class ComixBrowser {
         clearTimeout(navTimeout)
         const pageUrl = win.webContents.getURL()
         const title = win.getTitle()
-        const isCF = CF_INDICATORS.some(s => pageUrl.includes(s) || title.includes(s))
+        const isCF = CF_INDICATORS.some((s) => pageUrl.includes(s) || title.includes(s))
         if (isCF) {
           this.initialized = false
           win.show()
@@ -139,7 +160,7 @@ export class ComixBrowser {
     })
 
     try {
-      const result = await win.webContents.executeJavaScript(script) as T
+      const result = (await win.webContents.executeJavaScript(script)) as T
       win.loadURL('about:blank')
       return result
     } catch (e) {
@@ -150,9 +171,16 @@ export class ComixBrowser {
 
   /** Navigate to a page and capture the body of the first response matching urlSubstring.
    *  Uses CDP (debugger) so we get the exact JSON the page's own fetch receives. */
-  async navigateAndCapture(pageUrl: string, urlSubstring: string, timeoutMs = NAV_TIMEOUT_MS): Promise<string> {
-    if (this.cancelCapture) { this.cancelCapture(); this.cancelCapture = null }
-    await new Promise(r => setTimeout(r, 200))
+  async navigateAndCapture(
+    pageUrl: string,
+    urlSubstring: string,
+    timeoutMs = NAV_TIMEOUT_MS
+  ): Promise<string> {
+    if (this.cancelCapture) {
+      this.cancelCapture()
+      this.cancelCapture = null
+    }
+    await new Promise((r) => setTimeout(r, 200))
     await this.challengeSession()
     const win = this.ensureWindow()
     const dbg = win.webContents.debugger
@@ -170,7 +198,8 @@ export class ComixBrowser {
 
       function cleanup() {
         clearTimeout(timeout)
-        if (!win.isDestroyed()) win.webContents.debugger.sendCommand('Network.disable').catch(() => {})
+        if (!win.isDestroyed())
+          win.webContents.debugger.sendCommand('Network.disable').catch(() => {})
       }
 
       const onMsg = (_e: Electron.Event, method: string, params: Record<string, unknown>) => {
@@ -188,8 +217,9 @@ export class ComixBrowser {
           requestMap.delete(reqId)
           dbg.removeListener('message', onMsg)
           cleanup()
-          dbg.sendCommand('Network.getResponseBody', { requestId: reqId })
-            .then((body: {body: string}) => {
+          dbg
+            .sendCommand('Network.getResponseBody', { requestId: reqId })
+            .then((body: { body: string }) => {
               console.log('[comixto] captured chapters body:', body.body.slice(0, 200))
               resolve(body.body)
             })
@@ -210,9 +240,15 @@ export class ComixBrowser {
 
   /** Navigate to a chapter page and capture the first API response that contains image URLs.
    *  Logs all /api/v2/ responses seen so the correct URL pattern can be identified. */
-  async navigateAndCaptureChapterPages(pageUrl: string, timeoutMs = NAV_TIMEOUT_MS): Promise<string> {
-    if (this.cancelCapture) { this.cancelCapture(); this.cancelCapture = null }
-    await new Promise(r => setTimeout(r, 200))
+  async navigateAndCaptureChapterPages(
+    pageUrl: string,
+    timeoutMs = NAV_TIMEOUT_MS
+  ): Promise<string> {
+    if (this.cancelCapture) {
+      this.cancelCapture()
+      this.cancelCapture = null
+    }
+    await new Promise((r) => setTimeout(r, 200))
     await this.challengeSession()
     const win = this.ensureWindow()
     const dbg = win.webContents.debugger
@@ -234,7 +270,8 @@ export class ComixBrowser {
       function cleanup() {
         clearTimeout(timeout)
         dbg.removeListener('message', onMsg)
-        if (!win.isDestroyed()) win.webContents.debugger.sendCommand('Network.disable').catch(() => {})
+        if (!win.isDestroyed())
+          win.webContents.debugger.sendCommand('Network.disable').catch(() => {})
       }
 
       const cdnImageUrls: string[] = []
@@ -253,11 +290,29 @@ export class ComixBrowser {
         if (method === 'Network.responseReceived') {
           const resp = params.response as { url: string; status?: number; mimeType?: string }
           const u = resp?.url ?? ''
-          if (!u.includes('/_next/static') && !u.includes('.css') && !u.includes('.js') && !u.includes('favicon') && !u.startsWith('data:')) {
-            console.log('[comixto] chapter CDP request:', u, 'status:', resp.status, 'mime:', resp.mimeType)
+          if (
+            !u.includes('/_next/static') &&
+            !u.includes('.css') &&
+            !u.includes('.js') &&
+            !u.includes('favicon') &&
+            !u.startsWith('data:')
+          ) {
+            console.log(
+              '[comixto] chapter CDP request:',
+              u,
+              'status:',
+              resp.status,
+              'mime:',
+              resp.mimeType
+            )
           }
           // Collect CDN image URLs (chapter pages load directly as images, not via JSON API)
-          if (resp?.mimeType?.startsWith('image/') && resp.status === 200 && !u.includes('comix.to') && !u.startsWith('data:')) {
+          if (
+            resp?.mimeType?.startsWith('image/') &&
+            resp.status === 200 &&
+            !u.includes('comix.to') &&
+            !u.startsWith('data:')
+          ) {
             cdnImageUrls.push(u)
             if (batchTimer) clearTimeout(batchTimer)
             batchTimer = setTimeout(flushImages, 4000) // resolve 4s after last image (allows full-page scroll to finish)
@@ -270,7 +325,8 @@ export class ComixBrowser {
         if (method === 'Network.loadingFinished' && requestMap.has(params.requestId as string)) {
           const reqId = params.requestId as string
           requestMap.delete(reqId)
-          dbg.sendCommand('Network.getResponseBody', { requestId: reqId })
+          dbg
+            .sendCommand('Network.getResponseBody', { requestId: reqId })
             .then((body: { body: string }) => {
               if (settled) return
               if (/https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp|gif)/i.test(body.body)) {
@@ -289,7 +345,9 @@ export class ComixBrowser {
         console.log('[comixto] chapter page loaded, injecting scroll trigger...')
         // Scroll through the full page height in steps to trigger all lazy images.
         // Do NOT set img.loading=eager — causes OOM.
-        win.webContents.executeJavaScript(`
+        win.webContents
+          .executeJavaScript(
+            `
           (function() {
             var pos = 0;
             var stepSize = 700;
@@ -307,7 +365,9 @@ export class ComixBrowser {
               }, intervalMs);
             }, 1200);
           })()
-        `).catch(() => {})
+        `
+          )
+          .catch(() => {})
       })
 
       win.loadURL(pageUrl)
@@ -332,7 +392,12 @@ export class ComixBrowser {
       }
 
       // Watch for the Laravel remember-me cookie — this is set exactly when login succeeds
-      const onCookieChanged = (_e: Electron.Event, cookie: Electron.Cookie, _cause: string, removed: boolean) => {
+      const onCookieChanged = (
+        _e: Electron.Event,
+        cookie: Electron.Cookie,
+        _cause: string,
+        removed: boolean
+      ) => {
         console.log('[comixto] cookie set:', cookie.name)
         if (!removed && cookie.name.startsWith('remember_web_')) {
           console.log('[comixto] auth cookie detected — closing login window')
@@ -355,18 +420,31 @@ export class ComixBrowser {
   /** Test if the current session has valid auth by calling the chapters endpoint. */
   async isLoggedIn(testMangaId = 'o1rd'): Promise<boolean> {
     try {
-      const ses = this.getSession() as unknown as { fetch: (url: string, init?: RequestInit) => Promise<Response> }
-      const resp = await ses.fetch(`${BASE_URL}/api/v2/manga/${testMangaId}/chapters?page=1&limit=1`, {
-        headers: { 'Accept': 'application/json', 'User-Agent': 'Mozilla/5.0' }
-      } as RequestInit)
-      const d = await resp.json() as { status?: number; result?: unknown }
-      return typeof d.status === 'number' ? d.status < 400 : d.result !== null && d.result !== undefined
-    } catch { return false }
+      const ses = this.getSession() as unknown as {
+        fetch: (url: string, init?: RequestInit) => Promise<Response>
+      }
+      const resp = await ses.fetch(
+        `${BASE_URL}/api/v2/manga/${testMangaId}/chapters?page=1&limit=1`,
+        {
+          headers: { Accept: 'application/json', 'User-Agent': 'Mozilla/5.0' }
+        } as RequestInit
+      )
+      const d = (await resp.json()) as { status?: number; result?: unknown }
+      return typeof d.status === 'number'
+        ? d.status < 400
+        : d.result !== null && d.result !== undefined
+    } catch {
+      return false
+    }
   }
 
   /** Like navigateAndRun but reads the fresh XSRF-TOKEN cookie from the session after page load
    *  and replaces the given placeholder in the script before executing it. */
-  async navigateAndRunWithXsrf<T>(url: string, scriptTemplate: string, placeholder: string): Promise<T> {
+  async navigateAndRunWithXsrf<T>(
+    url: string,
+    scriptTemplate: string,
+    placeholder: string
+  ): Promise<T> {
     await this.challengeSession()
     const win = this.ensureWindow()
 
@@ -377,7 +455,7 @@ export class ComixBrowser {
         clearTimeout(navTimeout)
         const pageUrl = win.webContents.getURL()
         const title = win.getTitle()
-        const isCF = CF_INDICATORS.some(s => pageUrl.includes(s) || title.includes(s))
+        const isCF = CF_INDICATORS.some((s) => pageUrl.includes(s) || title.includes(s))
         if (isCF) {
           this.initialized = false
           win.show()
@@ -400,13 +478,22 @@ export class ComixBrowser {
     })
 
     // Page is loaded — read fresh XSRF-TOKEN from session cookie store (bypasses HttpOnly restriction)
-    const xsrfCookies = await this.getSession().cookies.get({ domain: 'comix.to', name: 'XSRF-TOKEN' })
+    const xsrfCookies = await this.getSession().cookies.get({
+      domain: 'comix.to',
+      name: 'XSRF-TOKEN'
+    })
     const xsrf = xsrfCookies.length > 0 ? decodeURIComponent(xsrfCookies[0].value) : ''
-    console.log('[comixto] post-nav XSRF-TOKEN:', xsrf ? `found (${xsrf.length} chars)` : 'NOT FOUND in session')
-    const script = scriptTemplate.replace(placeholder, `var __INJECTED_XSRF__ = ${JSON.stringify(xsrf)};`)
+    console.log(
+      '[comixto] post-nav XSRF-TOKEN:',
+      xsrf ? `found (${xsrf.length} chars)` : 'NOT FOUND in session'
+    )
+    const script = scriptTemplate.replace(
+      placeholder,
+      `var __INJECTED_XSRF__ = ${JSON.stringify(xsrf)};`
+    )
 
     try {
-      const result = await win.webContents.executeJavaScript(script) as T
+      const result = (await win.webContents.executeJavaScript(script)) as T
       win.loadURL('about:blank')
       return result
     } catch (e) {
@@ -456,7 +543,13 @@ export class ComixBrowser {
           win.loadURL('about:blank')
         }
       }
-      function cancel() { if (!resolved) { cleanup(); resolve(null) } }
+      function cancel() {
+        if (!resolved) {
+          cleanup()
+          resolve(null)
+        }
+      }
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this
       this.cancelCapture = cancel
 
@@ -467,12 +560,19 @@ export class ComixBrowser {
           let items: unknown[] = []
           try {
             const url = `/api/v2/manga/${mangaHashId}/chapters?limit=100&page=${page}&order[number]=desc&time=1&_=${capturedToken}`
-            const data = await win.webContents.executeJavaScript(
+            const data = (await win.webContents.executeJavaScript(
               `fetch(${JSON.stringify(url)}, { credentials: 'include' }).then(r => r.json()).catch(() => null)`
-            ) as { result?: { items?: unknown[] } } | null
+            )) as { result?: { items?: unknown[] } } | null
             items = data?.result?.items ?? []
             if (items.length > 0) allItems = allItems.concat(items)
-            console.log('[comixto] fetched page', page, '— got', items.length, 'items, total:', allItems.length)
+            console.log(
+              '[comixto] fetched page',
+              page,
+              '— got',
+              items.length,
+              'items, total:',
+              allItems.length
+            )
           } catch (e) {
             console.log('[comixto] page', page, 'fetch error:', String(e))
           }
@@ -493,27 +593,38 @@ export class ComixBrowser {
             requestMap.set(params.requestId as string, true)
             if (!capturedToken) {
               const m = req.url.match(/[?&]_=([^&]+)/)
-              if (m) { capturedToken = m[1]; console.log('[comixto] CDP captured auth token') }
+              if (m) {
+                capturedToken = m[1]
+                console.log('[comixto] CDP captured auth token')
+              }
             }
           }
         }
         if (method === 'Network.loadingFinished' && requestMap.has(params.requestId as string)) {
           const reqId = params.requestId as string
           requestMap.delete(reqId)
-          dbg.sendCommand('Network.getResponseBody', { requestId: reqId })
+          dbg
+            .sendCommand('Network.getResponseBody', { requestId: reqId })
             .then(async (body: { body: string }) => {
               if (resolved) return
               // Log full first item to see all available fields (for debugging URL format)
               try {
                 const parsed = JSON.parse(body.body) as { result?: { items?: unknown[] } }
                 const items = parsed?.result?.items ?? []
-                if (items.length > 0) console.log('[comixto] CDP chapter item[0]:', JSON.stringify(items[0]))
-              } catch { /* ignore */ }
+                if (items.length > 0)
+                  console.log('[comixto] CDP chapter item[0]:', JSON.stringify(items[0]))
+              } catch {
+                /* ignore */
+              }
               console.log('[comixto] CDP captured page 1 body:', body.body.slice(0, 600))
               try {
-                const data = JSON.parse(body.body) as { result?: { items?: unknown[]; pagination?: { last_page?: number } }; pagination?: { last_page?: number } }
+                const data = JSON.parse(body.body) as {
+                  result?: { items?: unknown[]; pagination?: { last_page?: number } }
+                  pagination?: { last_page?: number }
+                }
                 const items = data?.result?.items ?? []
-                const lastPage = data?.result?.pagination?.last_page ?? data?.pagination?.last_page ?? 0
+                const lastPage =
+                  data?.result?.pagination?.last_page ?? data?.pagination?.last_page ?? 0
                 allItems = allItems.concat(items)
                 console.log('[comixto] page 1 items:', allItems.length, 'lastPage:', lastPage)
                 // Remove CDP listener NOW so fetchRemainingPages\'s executeJavaScript fetches aren\'t double-captured
@@ -530,7 +641,10 @@ export class ComixBrowser {
                 resolve(null)
               }
             })
-            .catch(() => { cleanup(); resolve(null) })
+            .catch(() => {
+              cleanup()
+              resolve(null)
+            })
         }
       }
       dbg.on('message', onMsg)
@@ -538,21 +652,31 @@ export class ComixBrowser {
       win.webContents.once('did-finish-load', () => {
         const loadedUrl = win.webContents.getURL()
         console.log('[comixto] CDP page loaded url=' + loadedUrl + ' title=' + win.getTitle())
-        const isCF = CF_INDICATORS.some(s => loadedUrl.includes(s))
+        const isCF = CF_INDICATORS.some((s) => loadedUrl.includes(s))
         console.log('[comixto] CDP isCF=' + isCF + ', scrolling to trigger chapter load...')
         // Log first few chapter link URLs after React renders (delayed)
-        scrollTimers.push(setTimeout(() => {
-          if (!win.isDestroyed()) {
-            win.webContents.executeJavaScript(
-              `Array.from(document.querySelectorAll('a[href*="/chapter"]')).slice(0,5).map(a=>a.href)`
-            ).then((links: unknown) => console.log('[comixto] DOM chapter links:', JSON.stringify(links))).catch(() => {})
-          }
-        }, 5000))
+        scrollTimers.push(
+          setTimeout(() => {
+            if (!win.isDestroyed()) {
+              win.webContents
+                .executeJavaScript(
+                  `Array.from(document.querySelectorAll('a[href*="/chapter"]')).slice(0,5).map(a=>a.href)`
+                )
+                .then((links: unknown) =>
+                  console.log('[comixto] DOM chapter links:', JSON.stringify(links))
+                )
+                .catch(() => {})
+            }
+          }, 5000)
+        )
         const scroll = () => {
           if (!win.isDestroyed()) {
-            win.webContents.executeJavaScript(
-              'window.scrollTo(0, document.body.scrollHeight); document.body.scrollHeight'
-            ).then(h => console.log('[comixto] CDP scrolled, height=' + h)).catch(() => {})
+            win.webContents
+              .executeJavaScript(
+                'window.scrollTo(0, document.body.scrollHeight); document.body.scrollHeight'
+              )
+              .then((h) => console.log('[comixto] CDP scrolled, height=' + h))
+              .catch(() => {})
           }
         }
         scrollTimers.push(setTimeout(scroll, 1500))

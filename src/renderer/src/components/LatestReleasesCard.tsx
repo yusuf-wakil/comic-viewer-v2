@@ -17,7 +17,9 @@ export function LatestReleasesCard({ update, onClick }: Props) {
             src={update.coverUrl}
             alt={update.title}
             className="w-full h-full object-cover"
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            onError={(e) => {
+              ;(e.target as HTMLImageElement).style.display = 'none'
+            }}
           />
         ) : null}
       </div>
@@ -25,7 +27,9 @@ export function LatestReleasesCard({ update, onClick }: Props) {
         <p className="font-semibold text-text text-sm line-clamp-1 mb-1">{update.title}</p>
         {update.recentChapters[0] && (
           <div className="flex items-center gap-2">
-            <span className="text-accent font-semibold text-sm">Ch. {update.recentChapters[0].number}</span>
+            <span className="text-accent font-semibold text-sm">
+              Ch. {update.recentChapters[0].number}
+            </span>
             <span className="text-text-subtle text-xs">{update.recentChapters[0].date}</span>
           </div>
         )}

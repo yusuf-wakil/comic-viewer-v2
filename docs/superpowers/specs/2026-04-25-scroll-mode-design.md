@@ -62,9 +62,9 @@ Existing single-page behavior, untouched.
 
 ### Bottom bar
 
-| Mode | Content |
-|------|---------|
-| Page mode | Existing: ← Prev · `{currentPage + 1} / {pageUrls.length}` · Next → |
+| Mode        | Content                                                                  |
+| ----------- | ------------------------------------------------------------------------ |
+| Page mode   | Existing: ← Prev · `{currentPage + 1} / {pageUrls.length}` · Next →      |
 | Scroll mode | Centered: `Page {visiblePage + 1} of {pageUrls.length}` (no nav buttons) |
 
 ---
@@ -107,12 +107,12 @@ Add a gear icon button to the right side of the nav bar (after the existing "+ A
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `src/renderer/src/store/reader.ts` | Add `scrollMode`, `setScrollMode`, localStorage persistence |
+| File                                         | Change                                                                             |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `src/renderer/src/store/reader.ts`           | Add `scrollMode`, `setScrollMode`, localStorage persistence                        |
 | `src/renderer/src/components/ReaderView.tsx` | Segmented pill, scroll mode content + IntersectionObserver, conditional bottom bar |
-| `src/renderer/src/pages/Reader.tsx` | Pass `scrollMode` + `onToggleScrollMode` to ReaderView |
-| `src/renderer/src/components/TopNav.tsx` | Gear icon + dismissible settings dropdown |
+| `src/renderer/src/pages/Reader.tsx`          | Pass `scrollMode` + `onToggleScrollMode` to ReaderView                             |
+| `src/renderer/src/components/TopNav.tsx`     | Gear icon + dismissible settings dropdown                                          |
 
 No new files. No IPC changes. No new dependencies.
 

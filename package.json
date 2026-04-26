@@ -1,9 +1,9 @@
 {
-  "name": "opencomic-v2",
+  "name": "opencomic",
   "version": "1.0.0",
-  "description": "An Electron application with React and TypeScript",
+  "description": "A comic reader with online source support",
   "main": "./out/main/index.js",
-  "author": "example.com",
+  "author": "Yusuf Wakil",
   "homepage": "https://electron-vite.org",
   "scripts": {
     "format": "prettier --write .",
@@ -19,7 +19,7 @@
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "electron-vite build && electron-builder --linux",
-    "test": "vitest run --config vitest.config.ts && vitest run --config vitest.renderer.config.ts",
+    "test": "npm rebuild better-sqlite3 && vitest run --config vitest.config.ts && vitest run --config vitest.renderer.config.ts",
     "test:main": "npm rebuild better-sqlite3 && vitest run --config vitest.config.ts",
     "test:renderer": "vitest run --config vitest.renderer.config.ts",
     "test:watch": "vitest --config vitest.config.ts",

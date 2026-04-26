@@ -13,7 +13,7 @@ describe('extractPages', () => {
 
   it('each page is a non-empty buffer', async () => {
     const pages = await extractPages(fixturePath)
-    expect(pages.every(p => p.length > 0)).toBe(true)
+    expect(pages.every((p) => p.length > 0)).toBe(true)
   })
 
   it('throws on a non-existent file', async () => {

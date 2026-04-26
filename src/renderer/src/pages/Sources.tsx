@@ -24,9 +24,9 @@ const ALL_SOURCES: SourceId[] = ['comixto', 'yskcomics']
 
 const RATING_BADGE: Record<ContentRating, { label: string; className: string }> = {
   'all-ages': { label: 'All Ages', className: 'bg-green-100 text-green-700' },
-  'teen':     { label: 'Teen',     className: 'bg-blue-100 text-blue-700' },
-  'mature':   { label: 'Mature',   className: 'bg-orange-100 text-orange-700' },
-  'adult':    { label: '18+',      className: 'bg-red-100 text-red-700' },
+  teen: { label: 'Teen', className: 'bg-blue-100 text-blue-700' },
+  mature: { label: 'Mature', className: 'bg-orange-100 text-orange-700' },
+  adult: { label: '18+', className: 'bg-red-100 text-red-700' }
 }
 
 function rankByQuery(results: { id: string; title: string; coverUrl: string }[], query: string) {
@@ -38,9 +38,9 @@ function rankByQuery(results: { id: string; title: string; coverUrl: string }[],
     if (t.includes(q)) return 3
     // all query words present
     const words = q.split(/\s+/)
-    if (words.length > 1 && words.every(w => t.includes(w))) return 2
+    if (words.length > 1 && words.every((w) => t.includes(w))) return 2
     // any query word present
-    if (words.some(w => w.length > 2 && t.includes(w))) return 1
+    if (words.some((w) => w.length > 2 && t.includes(w))) return 1
     return 0
   }
   return [...results].sort((a, b) => score(b.title) - score(a.title))
@@ -49,9 +49,18 @@ function rankByQuery(results: { id: string; title: string; coverUrl: string }[],
 export function Sources({ activeSection, onSectionChange, onOpenReader }: Props) {
   const { invoke } = useIpc()
   const {
-    activeSource, results, selectedSeries, loading, error,
+    activeSource,
+    results,
+    selectedSeries,
+    loading,
+    error,
     pendingSeriesOpen,
-    setActiveSource, setResults, setSelectedSeries, setLoading, setError, setPendingSeriesOpen
+    setActiveSource,
+    setResults,
+    setSelectedSeries,
+    setLoading,
+    setError,
+    setPendingSeriesOpen
   } = useSourcesStore()
   const { addFavorite, removeFavorite, isFavorite } = useFavoritesStore()
   const { addHistory } = useHistoryStore()
@@ -149,9 +158,17 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
     setLoadingSeriesId(seriesId)
     setError(null)
     try {
-      const detail: SeriesDetail = await invoke('sources:getSeries', { sourceId: activeSource, seriesId })
+      const detail: SeriesDetail = await invoke('sources:getSeries', {
+        sourceId: activeSource,
+        seriesId
+      })
       setSelectedSeries(detail)
-      addHistory({ id: detail.id, title: detail.title, coverUrl: detail.coverUrl, sourceId: activeSource })
+      addHistory({
+        id: detail.id,
+        title: detail.title,
+        coverUrl: detail.coverUrl,
+        sourceId: activeSource
+      })
     } catch (e) {
       setError(String(e))
     } finally {
@@ -163,7 +180,10 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
     setOpeningChapter(chapterId)
     try {
       const pageUrls = await invoke('sources:openChapter', { sourceId: activeSource, chapterId })
-      if (pageUrls.length === 0) { setError('No pages found for this chapter'); return }
+      if (pageUrls.length === 0) {
+        setError('No pages found for this chapter')
+        return
+      }
       onOpenReader(chapterId, pageUrls, chapterTitle)
     } catch (e) {
       setError(String(e))
@@ -177,7 +197,10 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
     try {
       await invoke('sources:comixtoLogin', undefined)
       if (selectedSeries) {
-        const detail = await invoke('sources:getSeries', { sourceId: activeSource, seriesId: selectedSeries.id })
+        const detail = await invoke('sources:getSeries', {
+          sourceId: activeSource,
+          seriesId: selectedSeries.id
+        })
         setSelectedSeries(detail)
       }
     } catch (e) {
@@ -192,7 +215,12 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
     if (isFavorite(selectedSeries.id)) {
       removeFavorite(selectedSeries.id)
     } else {
-      addFavorite({ id: selectedSeries.id, title: selectedSeries.title, coverUrl: selectedSeries.coverUrl, sourceId: activeSource })
+      addFavorite({
+        id: selectedSeries.id,
+        title: selectedSeries.title,
+        coverUrl: selectedSeries.coverUrl,
+        sourceId: activeSource
+      })
     }
   }
 
@@ -215,10 +243,13 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
 
       {/* Source tabs */}
       <div className="flex gap-1 px-4 pt-2 border-b border-border bg-surface">
-        {ALL_SOURCES.map(sourceId => (
+        {ALL_SOURCES.map((sourceId) => (
           <button
             key={sourceId}
-            onClick={() => { setActiveSource(sourceId); setSelectedSeries(null) }}
+            onClick={() => {
+              setActiveSource(sourceId)
+              setSelectedSeries(null)
+            }}
             className={`px-3 py-1.5 rounded-t text-sm font-medium transition-colors border-b-2 ${
               activeSource === sourceId
                 ? 'border-accent text-text'
@@ -236,7 +267,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
           <input
             type="search"
             value={searchQuery}
-            onChange={e => handleSearchInput(e.target.value)}
+            onChange={(e) => handleSearchInput(e.target.value)}
             placeholder={`Search ${SOURCE_LABELS[activeSource]}…`}
             className="w-full max-w-sm px-3 py-1.5 text-sm border border-border rounded-md bg-bg focus:outline-none focus:ring-2 focus:ring-accent/50 focus:bg-surface"
           />
@@ -247,12 +278,16 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
         {loadingSeriesId && !selectedSeries ? (
           <div className="p-4">
             <button
-              onClick={() => { setLoadingSeriesId(null) }}
+              onClick={() => {
+                setLoadingSeriesId(null)
+              }}
               className="mb-4 text-sm text-text-muted hover:text-text flex items-center gap-1"
             >
               ← Back
             </button>
-            <div className="flex items-center justify-center h-48 text-text-subtle">Loading series…</div>
+            <div className="flex items-center justify-center h-48 text-text-subtle">
+              Loading series…
+            </div>
           </div>
         ) : selectedSeries ? (
           <div className="p-4">
@@ -273,32 +308,52 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-2 mb-1">
                   <h2 className="text-xl font-bold text-text flex-1">{selectedSeries.title}</h2>
-                  {selectedSeries.contentRating && (() => {
-                    const badge = RATING_BADGE[selectedSeries.contentRating!]
-                    return <span className={`flex-shrink-0 mt-1 text-xs font-semibold px-2 py-0.5 rounded ${badge.className}`}>{badge.label}</span>
-                  })()}
+                  {selectedSeries.contentRating &&
+                    (() => {
+                      const badge = RATING_BADGE[selectedSeries.contentRating!]
+                      return (
+                        <span
+                          className={`flex-shrink-0 mt-1 text-xs font-semibold px-2 py-0.5 rounded ${badge.className}`}
+                        >
+                          {badge.label}
+                        </span>
+                      )
+                    })()}
                   <button
                     onClick={handleToggleFavorite}
                     title={starred ? 'Remove from starred' : 'Add to starred'}
                     className="flex-shrink-0 mt-0.5 p-1 rounded hover:bg-surface-raised transition-colors"
                   >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill={starred ? '#f59e0b' : 'none'} stroke={starred ? '#f59e0b' : '#9ca3af'} strokeWidth="2">
-                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    <svg
+                      width="22"
+                      height="22"
+                      viewBox="0 0 24 24"
+                      fill={starred ? '#f59e0b' : 'none'}
+                      stroke={starred ? '#f59e0b' : '#9ca3af'}
+                      strokeWidth="2"
+                    >
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                   </button>
                 </div>
                 {selectedSeries.genres.length > 0 && (
-                  <p className="text-sm text-text-subtle mb-2">{selectedSeries.genres.join(', ')}</p>
+                  <p className="text-sm text-text-subtle mb-2">
+                    {selectedSeries.genres.join(', ')}
+                  </p>
                 )}
                 {selectedSeries.description && (
-                  <p className="text-sm text-text-muted leading-relaxed">{selectedSeries.description}</p>
+                  <p className="text-sm text-text-muted leading-relaxed">
+                    {selectedSeries.description}
+                  </p>
                 )}
               </div>
             </div>
 
             {activeSource === 'comixto' && selectedSeries.loginRequired && (
               <div className="p-6 text-center border border-border rounded bg-surface">
-                <p className="text-sm text-text-muted mb-3">Comix.to requires an account to view chapters.</p>
+                <p className="text-sm text-text-muted mb-3">
+                  Comix.to requires an account to view chapters.
+                </p>
                 <button
                   onClick={handleLogin}
                   disabled={loggingIn}
@@ -308,11 +363,14 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                 </button>
               </div>
             )}
-            {activeSource === 'comixto' && !selectedSeries.loginRequired && selectedSeries.chapters.length === 0 && (
-              <div className="p-4 text-sm text-text-muted bg-surface-raised border border-border rounded">
-                No chapters found. Try clicking the series again, or check if this title requires a subscription.
-              </div>
-            )}
+            {activeSource === 'comixto' &&
+              !selectedSeries.loginRequired &&
+              selectedSeries.chapters.length === 0 && (
+                <div className="p-4 text-sm text-text-muted bg-surface-raised border border-border rounded">
+                  No chapters found. Try clicking the series again, or check if this title requires
+                  a subscription.
+                </div>
+              )}
             {error && (
               <div className="mb-3 p-3 text-sm text-text-muted bg-surface-raised border border-border rounded-md">
                 {error}
@@ -324,13 +382,23 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-text-subtle">{sortedChapters.length} chapters</span>
                 <button
-                  onClick={() => setSortOrder(s => s === 'desc' ? 'asc' : 'desc')}
+                  onClick={() => setSortOrder((s) => (s === 'desc' ? 'asc' : 'desc'))}
                   className="flex items-center gap-1 text-xs text-text-subtle hover:text-text px-2 py-1 rounded hover:bg-surface-raised transition-colors"
                 >
                   {sortOrder === 'desc' ? (
-                    <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 9L2 3h8L6 9z" fill="currentColor"/></svg>Latest first</>
+                    <>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M6 9L2 3h8L6 9z" fill="currentColor" />
+                      </svg>
+                      Latest first
+                    </>
                   ) : (
-                    <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 3l4 6H2L6 3z" fill="currentColor"/></svg>Oldest first</>
+                    <>
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M6 3l4 6H2L6 3z" fill="currentColor" />
+                      </svg>
+                      Oldest first
+                    </>
                   )}
                 </button>
               </div>
@@ -340,12 +408,21 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
               {sortedChapters.map((chapter) => (
                 <button
                   key={chapter.id}
-                  onClick={() => handleOpenChapter(chapter.id, chapter.title ? `Ch. ${chapter.number} — ${chapter.title}` : `Chapter ${chapter.number}`)}
+                  onClick={() =>
+                    handleOpenChapter(
+                      chapter.id,
+                      chapter.title
+                        ? `Ch. ${chapter.number} — ${chapter.title}`
+                        : `Chapter ${chapter.number}`
+                    )
+                  }
                   disabled={openingChapter === chapter.id}
                   className="w-full text-left px-4 py-3 hover:bg-surface-raised transition-colors flex justify-between items-center disabled:opacity-50"
                 >
                   <div className="flex items-baseline gap-3 min-w-0">
-                    <span className="text-xs text-text-subtle tabular-nums flex-shrink-0 min-w-[3rem]">Ch.{chapter.number}</span>
+                    <span className="text-xs text-text-subtle tabular-nums flex-shrink-0 min-w-[3rem]">
+                      Ch.{chapter.number}
+                    </span>
                     <span className="text-sm font-medium text-text truncate">
                       {chapter.title || ''}
                     </span>
@@ -359,9 +436,11 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
           </div>
         ) : (
           <div>
-            {!searchQuery && <LatestReleasesSection sourceId={activeSource} onSelect={handleSelectSeries} />}
+            {!searchQuery && (
+              <LatestReleasesSection sourceId={activeSource} onSelect={handleSelectSeries} />
+            )}
 
-            {(loading && !loadingSeriesId) && (
+            {loading && !loadingSeriesId && (
               <div className="flex items-center justify-center h-64 text-text-subtle">Loading…</div>
             )}
             {error && (
@@ -389,7 +468,9 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                             src={series.coverUrl}
                             alt={series.title}
                             className="w-full h-full object-cover"
-                            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                            onError={(e) => {
+                              ;(e.target as HTMLImageElement).style.display = 'none'
+                            }}
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-text-subtle text-xs p-2 leading-tight">
@@ -403,9 +484,13 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-text font-medium line-clamp-2 w-full leading-tight">{series.title}</span>
+                      <span className="text-xs text-text font-medium line-clamp-2 w-full leading-tight">
+                        {series.title}
+                      </span>
                       {series.rating != null && (
-                        <span className="text-[10px] text-amber-600 font-medium mt-0.5">★ {series.rating.toFixed(1)}</span>
+                        <span className="text-[10px] text-amber-600 font-medium mt-0.5">
+                          ★ {series.rating.toFixed(1)}
+                        </span>
                       )}
                     </button>
                   ))}

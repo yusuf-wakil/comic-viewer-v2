@@ -28,25 +28,25 @@ Login/signup and light mode are acknowledged as future work and are explicitly o
 
 ### Dark Base Palette (fixed across all themes)
 
-| Token | Value | Usage |
-|---|---|---|
-| `--color-bg` | `#0d0f14` | Page background |
-| `--color-surface` | `#161920` | Cards, panels |
-| `--color-surface-raised` | `#1e2230` | Popovers, modals |
-| `--color-border` | `#252933` | Dividers, card borders |
-| `--color-text` | `#f0f2f8` | Primary text |
-| `--color-text-muted` | `#8b91a0` | Secondary text, labels |
-| `--color-text-subtle` | `#555b6a` | Timestamps, tertiary info |
+| Token                    | Value     | Usage                     |
+| ------------------------ | --------- | ------------------------- |
+| `--color-bg`             | `#0d0f14` | Page background           |
+| `--color-surface`        | `#161920` | Cards, panels             |
+| `--color-surface-raised` | `#1e2230` | Popovers, modals          |
+| `--color-border`         | `#252933` | Dividers, card borders    |
+| `--color-text`           | `#f0f2f8` | Primary text              |
+| `--color-text-muted`     | `#8b91a0` | Secondary text, labels    |
+| `--color-text-subtle`    | `#555b6a` | Timestamps, tertiary info |
 
 ### Accent Colors (user-selectable)
 
-| Name | Value |
-|---|---|
+| Name           | Value     |
+| -------------- | --------- |
 | Teal (default) | `#2dd4bf` |
-| Indigo | `#818cf8` |
-| Amber | `#fbbf24` |
-| Rose | `#fb7185` |
-| Lime | `#a3e635` |
+| Indigo         | `#818cf8` |
+| Amber          | `#fbbf24` |
+| Rose           | `#fb7185` |
+| Lime           | `#a3e635` |
 
 Stored as `--color-accent` on the `<html>` element. Persisted to `localStorage` under the key `opencomic-accent`.
 
@@ -89,8 +89,8 @@ CSS cannot read `localStorage`. To avoid a visible color flash on first paint, a
 ```html
 <!-- index.html <head> — before stylesheet links -->
 <script>
-  const accent = localStorage.getItem('opencomic-accent');
-  if (accent) document.documentElement.style.setProperty('--color-accent', accent);
+  const accent = localStorage.getItem('opencomic-accent')
+  if (accent) document.documentElement.style.setProperty('--color-accent', accent)
 </script>
 ```
 
@@ -111,7 +111,7 @@ export interface LatestUpdate {
   seriesId: string
   title: string
   coverUrl: string
-  recentChapters: Array<{ number: string; date: string }>  // 1 entry in practice (browse API limit)
+  recentChapters: Array<{ number: string; date: string }> // 1 entry in practice (browse API limit)
 }
 ```
 
@@ -172,42 +172,50 @@ Each source populates `recentChapters` from the data available in its browse res
 ### Modified
 
 #### `src/renderer/src/index.html`
+
 - Add inline `<script>` in `<head>` (before stylesheets) to restore accent from `localStorage`
 
 #### `src/renderer/src/index.css`
+
 - Add `:root {}` block with all color tokens
 - Add `@theme {}` block wiring tokens into Tailwind (`:root` must precede `@theme`)
 
 #### `TopNav.tsx` (`src/renderer/src/components/TopNav.tsx`)
+
 - Add `<ThemeSwitcher />` icon button (palette icon) at top-right
 - Search input: `rounded-full bg-surface border border-border`
 - Lighter visual weight: reduce border prominence, tighten padding
 
 #### `CoverCard.tsx` (`src/renderer/src/components/CoverCard.tsx`)
+
 - Progress bar: `bg-accent`
 - Title: `line-clamp-2`
 - Hover: `hover:scale-[1.02] hover:shadow-lg transition-transform duration-150 ease-out`
 - `rounded-xl`, tighter padding
 
 #### `Library.tsx` (`src/renderer/src/pages/Library.tsx`)
+
 - Render `<LatestReleasesSection />` above `<CoverGrid />`
 - Apply shared section heading class to both section labels
 
 ### New
 
 #### `LatestReleasesCard.tsx` (`src/renderer/src/components/LatestReleasesCard.tsx`)
+
 - Layout: cover thumbnail left (`w-11 h-16 rounded-md object-cover flex-shrink-0`) + info column right
 - Title: `font-semibold text-text line-clamp-1`
 - Chapter row: chapter number in `text-accent font-semibold text-sm` + timestamp in `text-text-subtle text-xs`
 - Card: `bg-surface border border-border rounded-xl p-3`
 
 #### `LatestReleasesSection.tsx` (`src/renderer/src/components/LatestReleasesSection.tsx`)
+
 - On mount: calls `invoke('sources:getLatestUpdates', { sourceId: activeSource })` via `useIpc` hook
 - Render: `null` while loading (no spinner — library grid below remains visible)
 - On data: 2-column grid (`grid grid-cols-2 gap-3`) of `<LatestReleasesCard />`
 - On error or empty: single muted line "No recent updates"
 
 #### `ThemeSwitcher.tsx` (`src/renderer/src/components/ThemeSwitcher.tsx`)
+
 - Palette icon button in TopNav
 - On click: popover (`bg-surface-raised border border-border rounded-lg p-2`) with 5 accent color circles (`w-6 h-6 rounded-full`)
 - Active circle: `ring-2 ring-white ring-offset-1 ring-offset-surface-raised`

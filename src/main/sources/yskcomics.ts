@@ -4,8 +4,9 @@ import { net } from 'electron'
 
 const API = 'https://api.ysk-comics.com/api/v1'
 const HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-  'x-api-key': '123456',
+  'User-Agent':
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
+  'x-api-key': '123456'
 }
 
 async function get<T>(path: string): Promise<T> {
@@ -57,7 +58,7 @@ function mapComic(m: ComicItem): SeriesResult {
     id: m.slug,
     title: m.full_name,
     coverUrl: m.image,
-    rating: parseFloat(m.rate) || undefined,
+    rating: parseFloat(m.rate) || undefined
   }
 }
 
@@ -68,14 +69,20 @@ let catalogFetchPromise: Promise<SeriesResult[]> | null = null
 
 function warmCatalog(): void {
   if (!catalogCache && !catalogFetchPromise) {
-    catalogFetchPromise = buildCatalog().then(c => { catalogCache = c; return c })
+    catalogFetchPromise = buildCatalog().then((c) => {
+      catalogCache = c
+      return c
+    })
   }
 }
 
 async function getFullCatalog(): Promise<SeriesResult[]> {
   if (catalogCache) return catalogCache
   if (!catalogFetchPromise) {
-    catalogFetchPromise = buildCatalog().then(c => { catalogCache = c; return c })
+    catalogFetchPromise = buildCatalog().then((c) => {
+      catalogCache = c
+      return c
+    })
   }
   return catalogFetchPromise
 }
@@ -132,11 +139,14 @@ export const yskComicsProvider: SourceProvider = {
     const catalog = await getFullCatalog()
     const q = query.toLowerCase().trim()
     if (!q) return catalog.slice(0, 50)
-    return catalog.filter(c => c.title.toLowerCase().includes(q))
+    return catalog.filter((c) => c.title.toLowerCase().includes(q))
   },
 
   async getSeries(id: string): Promise<SeriesDetail> {
-    interface DetailWrapper { status: boolean; data: ComicDetail }
+    interface DetailWrapper {
+      status: boolean
+      data: ComicDetail
+    }
     const raw = await get<DetailWrapper>(`/comics/${id}`)
     const d = raw.data
     const chapters = await fetchAllChapters(id)
@@ -145,20 +155,25 @@ export const yskComicsProvider: SourceProvider = {
       title: d.full_name,
       coverUrl: d.image,
       description: d.description ?? '',
-      genres: (d.genres ?? []).map(g => g.name),
-      chapters,
+      genres: (d.genres ?? []).map((g) => g.name),
+      chapters
     }
   },
 
   async getChapterPages(chapterId: string): Promise<PageEntry[]> {
-    interface ImagesResponse { status: boolean; data: string[] }
+    interface ImagesResponse {
+      status: boolean
+      data: string[]
+    }
     const raw = await get<ImagesResponse>(`/chapters/${chapterId}/images`)
-    return raw.data.map(url => ({ url }))
+    return raw.data.map((url) => ({ url }))
   },
 
   async fetchPageBuffer(url: string): Promise<Buffer> {
-    const resp = await net.fetch(url, { headers: { ...HEADERS, Referer: 'https://www.ysk-comics.com/' } })
+    const resp = await net.fetch(url, {
+      headers: { ...HEADERS, Referer: 'https://www.ysk-comics.com/' }
+    })
     if (!resp.ok) throw new Error(`YSK Comics image fetch failed: ${resp.status}`)
     return Buffer.from(await resp.arrayBuffer())
-  },
+  }
 }

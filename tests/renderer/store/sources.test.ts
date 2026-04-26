@@ -40,7 +40,11 @@ describe('sourcesStore', () => {
 
   test('setSelectedSeries stores series detail', () => {
     const detail: SeriesDetail = {
-      id: '1', title: 'Test', coverUrl: '', description: '', genres: [],
+      id: '1',
+      title: 'Test',
+      coverUrl: '',
+      description: '',
+      genres: [],
       chapters: [{ id: 'ch1', number: '1', title: 'Chapter 1', date: '' }]
     }
     act(() => useSourcesStore.getState().setSelectedSeries(detail))

@@ -1,7 +1,10 @@
 import { create } from 'zustand'
 import type { SourceId, SeriesResult, SeriesDetail } from '@shared/types/source'
 
-export interface PendingSeriesOpen { sourceId: SourceId; seriesId: string }
+export interface PendingSeriesOpen {
+  sourceId: SourceId
+  seriesId: string
+}
 
 interface SourcesState {
   activeSource: SourceId
@@ -30,5 +33,5 @@ export const useSourcesStore = create<SourcesState>((set) => ({
   setSelectedSeries: (selectedSeries) => set({ selectedSeries }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
-  setPendingSeriesOpen: (pendingSeriesOpen) => set({ pendingSeriesOpen }),
+  setPendingSeriesOpen: (pendingSeriesOpen) => set({ pendingSeriesOpen })
 }))

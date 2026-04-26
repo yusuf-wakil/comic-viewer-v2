@@ -9,7 +9,7 @@ beforeAll(() => {
     return {
       observe: vi.fn(),
       unobserve: vi.fn(),
-      disconnect: vi.fn(),
+      disconnect: vi.fn()
     }
   }) as unknown as typeof IntersectionObserver
 })
@@ -23,7 +23,7 @@ const baseProps = {
   onClose: vi.fn(),
   onPageChange: vi.fn(),
   scrollMode: false,
-  onToggleScrollMode: vi.fn(),
+  onToggleScrollMode: vi.fn()
 }
 
 describe('ReaderView – scroll mode pill', () => {

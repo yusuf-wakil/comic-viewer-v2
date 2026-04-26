@@ -12,12 +12,17 @@ export function LatestReleasesSection({ sourceId, onSelect }: Props) {
 
   useEffect(() => {
     let cancelled = false
-    window.ipc.invoke('sources:getLatestUpdates', { sourceId })
+    window.ipc
+      .invoke('sources:getLatestUpdates', { sourceId })
       .then((result: { ok: boolean; data?: LatestUpdate[]; error?: string }) => {
         if (!cancelled) setUpdates(result.ok ? (result.data ?? []) : [])
       })
-      .catch(() => { if (!cancelled) setUpdates([]) })
-    return () => { cancelled = true }
+      .catch(() => {
+        if (!cancelled) setUpdates([])
+      })
+    return () => {
+      cancelled = true
+    }
   }, [sourceId])
 
   if (updates === null) return null
@@ -31,7 +36,7 @@ export function LatestReleasesSection({ sourceId, onSelect }: Props) {
         <p className="text-text-subtle text-sm">No recent updates</p>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          {updates.map(u => (
+          {updates.map((u) => (
             <LatestReleasesCard
               key={u.seriesId}
               update={u}

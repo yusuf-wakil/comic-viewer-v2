@@ -21,13 +21,13 @@ export const useHistoryStore = create<HistoryState>()(
     (set) => ({
       history: [],
       addHistory: (item) =>
-        set(s => ({
+        set((s) => ({
           history: [
             { ...item, lastReadAt: Date.now() },
-            ...s.history.filter(h => h.id !== item.id),
-          ].slice(0, 50),
+            ...s.history.filter((h) => h.id !== item.id)
+          ].slice(0, 50)
         })),
-      removeHistory: (id) => set(s => ({ history: s.history.filter(h => h.id !== id) })),
+      removeHistory: (id) => set((s) => ({ history: s.history.filter((h) => h.id !== id) }))
     }),
     { name: 'opencomic-history' }
   )

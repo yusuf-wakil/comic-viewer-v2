@@ -18,18 +18,21 @@ export function useLibrary() {
     }
   }, [invoke, setComics, setLoading, setError])
 
-  const scanFolder = useCallback(async (path: string) => {
-    setLoading(true)
-    try {
-      const data = await invoke('library:scan', { path })
-      setComics(data)
-    } catch (e) {
-      setError(String(e))
-      throw e
-    } finally {
-      setLoading(false)
-    }
-  }, [invoke, setComics, setLoading, setError])
+  const scanFolder = useCallback(
+    async (path: string) => {
+      setLoading(true)
+      try {
+        const data = await invoke('library:scan', { path })
+        setComics(data)
+      } catch (e) {
+        setError(String(e))
+        throw e
+      } finally {
+        setLoading(false)
+      }
+    },
+    [invoke, setComics, setLoading, setError]
+  )
 
   return { loadLibrary, scanFolder }
 }
