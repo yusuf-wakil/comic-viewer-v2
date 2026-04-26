@@ -20,7 +20,7 @@ Login/signup and light mode are acknowledged as future work and are explicitly o
 
 ## Approach
 
-**Home Screen Overhaul First** — redesign the Library/Home screen end-to-end, baking in the color system as part of that work. Reader and Sources screens receive the color system but no layout changes. This gives immediate visual payoff and a battle-tested theme system before touching secondary screens.
+**Home Screen Overhaul First** — redesign the Library/Home screen end-to-end, baking in the color system as part of that work. Reader and Sources screens receive the color system tokens but no layout changes. This gives immediate visual payoff and a battle-tested theme system before touching secondary screens.
 
 ---
 
@@ -48,11 +48,84 @@ Login/signup and light mode are acknowledged as future work and are explicitly o
 | Rose | `#fb7185` |
 | Lime | `#a3e635` |
 
-Stored as `--color-accent` on the `<html>` element. Persisted to `localStorage` under the key `opencomic-accent`. All Tailwind accent utilities reference this variable.
+Stored as `--color-accent` on the `<html>` element. Persisted to `localStorage` under the key `opencomic-accent`.
 
-### Tailwind Wiring
+### Tailwind 4.x Wiring
 
-`index.css` defines the CSS custom properties on `:root`. The Tailwind config extends the theme to map `accent` → `var(--color-accent)`, `surface` → `var(--color-surface)`, etc., so standard utility classes like `bg-surface`, `text-accent`, `border-border` work across all components.
+Tailwind CSS 4.x does not use `tailwind.config.js` for theme extension. All custom tokens are defined in an `@theme {}` block inside `src/renderer/src/index.css`:
+
+```css
+:root {
+  --color-bg: #0d0f14;
+  --color-surface: #161920;
+  --color-surface-raised: #1e2230;
+  --color-border: #252933;
+  --color-text: #f0f2f8;
+  --color-text-muted: #8b91a0;
+  --color-text-subtle: #555b6a;
+  --color-accent: #2dd4bf; /* overwritten at runtime */
+}
+
+@theme {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-raised: var(--color-surface-raised);
+  --color-border: var(--color-border);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-subtle: var(--color-text-subtle);
+  --color-accent: var(--color-accent);
+}
+```
+
+This allows standard Tailwind utilities like `bg-surface`, `text-accent`, `border-border` to work across all components.
+
+### ThemeSwitcher Initialization (no flash)
+
+CSS cannot read `localStorage`. To avoid a flash-of-default-color on first paint, a small inline script must run in `index.html` before React mounts:
+
+```html
+<!-- index.html <head>, before any stylesheets -->
+<script>
+  const accent = localStorage.getItem('opencomic-accent');
+  if (accent) document.documentElement.style.setProperty('--color-accent', accent);
+</script>
+```
+
+`ThemeSwitcher.tsx` handles only **writing** (updates `document.documentElement` + `localStorage`). Init/restore lives in `index.html`, not in any React component.
+
+---
+
+## Data Model Extension
+
+The existing `SeriesResult` type (`src/shared/types/source.ts`) has only `latestChapter?: string` — one chapter, no timestamps. The Latest Releases section requires multiple recent chapters per title with dates.
+
+### New type
+
+Add to `src/shared/types/source.ts`:
+
+```ts
+export interface LatestUpdate {
+  seriesId: string
+  title: string
+  coverUrl: string
+  recentChapters: Array<{ number: string; date: string }>  // up to 3, newest first
+}
+```
+
+### New IPC channel
+
+Add `getLatestUpdates` to `src/shared/ipc/types.ts`:
+
+```ts
+getLatestUpdates: () => Promise<LatestUpdate[]>
+```
+
+Each source (`comixto.ts`, `yskcomics.ts`) implements this by fetching with `sort: 'latest'` and returning the top results with their recent chapter data. The main process handler in `src/main/ipc/handlers.ts` calls the active source's implementation.
+
+### Fallback
+
+If the fetch fails or returns empty, `LatestReleasesSection` shows a muted "No recent updates" message. No spinner — the library grid remains visible immediately.
 
 ---
 
@@ -72,6 +145,7 @@ Stored as `--color-accent` on the `<html>` element. Persisted to `localStorage` 
 │  │  • Ch. 56  5m    │  │  • Ch. 19  8m   │     │
 │  │  • Ch. 55  1h    │  │  • Ch. 18  2h   │     │
 │  └──────────────────┘  └──────────────────┘     │
+│  (top 10 entries, vertical growth, no scroll)   │
 │                                                 │
 │  ─────────────────────────────────────────      │
 │                                                 │
@@ -84,8 +158,9 @@ Stored as `--color-accent` on the `<html>` element. Persisted to `localStorage` 
 ```
 
 - No sidebar — full-width, clean
-- Section headings use `text-text-muted` small caps style
-- Clear visual divider between the two sections
+- Latest Releases shows the top 10 entries, grows vertically (no horizontal scroll)
+- Section headings: `text-xs tracking-widest uppercase text-text-muted font-semibold` — applied consistently to both "LATEST RELEASES" and "YOUR LIBRARY"
+- Clear visual divider (`border-t border-border`) between the two sections
 
 ---
 
@@ -93,41 +168,50 @@ Stored as `--color-accent` on the `<html>` element. Persisted to `localStorage` 
 
 ### Modified
 
-#### `TopNav.tsx`
-- Adds `ThemeSwitcher` icon button (palette icon) in the top-right
-- Search input gets a pill shape on `bg-surface` background
-- Reduced visual weight — lighter borders, cleaner spacing
+#### `src/renderer/src/index.css`
+- Add `:root {}` CSS custom properties for all color tokens
+- Add `@theme {}` block wiring tokens into Tailwind
+- Add inline-script note (the actual script goes in `index.html`)
 
-#### `CoverCard.tsx`
-- Tighter padding, `rounded-xl`
-- Progress bar uses `bg-accent` instead of a hardcoded color
-- Title truncates at 2 lines (`line-clamp-2`)
-- Hover: subtle lift with `shadow-lg` and `scale-[1.02]` transition
+#### `src/renderer/src/index.html`
+- Add inline `<script>` in `<head>` to restore accent from `localStorage` before paint
 
-#### `Library.tsx`
-- Renders `LatestReleasesSection` above the existing `CoverGrid`
-- Section heading styles standardized
+#### `TopNav.tsx` (`src/renderer/src/components/TopNav.tsx`)
+- Adds `<ThemeSwitcher />` icon button (palette icon, `lucide-react` or equivalent) at top-right
+- Search input: pill shape (`rounded-full`), `bg-surface` background, `border-border`
+- Reduced visual weight: lighter border, tighter padding
+
+#### `CoverCard.tsx` (`src/renderer/src/components/CoverCard.tsx`)
+- Progress bar: `bg-accent` instead of hardcoded color
+- Title: `line-clamp-2`
+- Hover: `hover:scale-[1.02] hover:shadow-lg transition-transform duration-150 ease-out`
+- `rounded-xl`, tighter padding
+
+#### `Library.tsx` (`src/renderer/src/pages/Library.tsx`)
+- Renders `<LatestReleasesSection />` above the existing `<CoverGrid />`
+- Section heading classes applied consistently (see above)
 
 ### New
 
-#### `LatestReleasesCard.tsx`
-- Layout: cover thumbnail (left, fixed 44×60px) + info column (right)
-- Info column: title (bold), then a list of up to 3 recent chapters
-- Each chapter row: chapter number in `text-accent` + relative timestamp in `text-text-subtle`
-- "Updated X ago" summary line at the bottom in `text-text-subtle`
-- Card background: `bg-surface`, border: `border-border`, `rounded-xl`
+#### `LatestReleasesCard.tsx` (`src/renderer/src/components/LatestReleasesCard.tsx`)
+- Layout: cover thumbnail left (`w-11 h-16`, `rounded-md`, `object-cover`) + info column right
+- Title: `font-semibold text-text`, `line-clamp-1`
+- Chapter rows (up to 3): chapter number in `text-accent font-semibold text-sm` + relative timestamp in `text-text-subtle text-xs`
+- "Updated X ago" summary below chapters in `text-text-subtle text-xs`
+- Card: `bg-surface border border-border rounded-xl p-3`
 
-#### `LatestReleasesSection.tsx`
-- Wraps a 2-column responsive grid of `LatestReleasesCard`
-- Section heading: "LATEST RELEASES" in small-caps muted style
-- Data sourced from the existing sources store (Zustand `sources.ts`)
+#### `LatestReleasesSection.tsx` (`src/renderer/src/components/LatestReleasesSection.tsx`)
+- On mount: calls `window.api.getLatestUpdates()` via `useIpc` hook pattern (matches existing `src/renderer/src/hooks/useIpc.ts`)
+- 2-column responsive grid (`grid grid-cols-2 gap-3`)
+- Shows top 10 `LatestUpdate` entries, grows vertically
+- Fallback: muted "No recent updates" text if fetch fails or returns empty
 
-#### `ThemeSwitcher.tsx`
-- Small palette icon button in TopNav
-- On click: popover with 5 colored circle buttons (one per accent color)
-- Active accent has a white ring border
-- On select: sets `--color-accent` on `document.documentElement`, writes to `localStorage`
-- Reads saved preference on app init in `index.css` or a root-level effect
+#### `ThemeSwitcher.tsx` (`src/renderer/src/components/ThemeSwitcher.tsx`)
+- Palette icon button in TopNav
+- On click: popover with 5 accent color circles (`w-6 h-6 rounded-full`)
+- Active accent: white ring border (`ring-2 ring-white`)
+- On select: `document.documentElement.style.setProperty('--color-accent', value)` + `localStorage.setItem('opencomic-accent', value)`
+- Does NOT handle init/restore — that belongs in `index.html`
 
 ---
 
@@ -136,15 +220,16 @@ Stored as `--color-accent` on the `<html>` element. Persisted to `localStorage` 
 - Login / signup UI (future milestone)
 - Light mode (future — dark-only for now)
 - Hero/featured banner (future)
-- Reader or Sources layout changes (color system applied but no structural changes)
+- Reader or Sources layout changes (color tokens applied but no structural changes)
 
 ---
 
 ## Verification
 
-1. **Color system:** Toggle each of the 5 accent colors via ThemeSwitcher — all accent-colored elements (progress bars, chapter numbers, active states) update immediately without reload
-2. **Persistence:** Close and reopen the app — the last selected accent color is restored
-3. **Latest Releases:** Section appears above the library grid on the home screen, showing cover + multiple chapters + timestamps per entry
-4. **Library grid:** Existing comics display correctly with the updated CoverCard styling
-5. **TopNav:** Theme switcher icon is visible and functional; search input renders cleanly
-6. **No regressions:** Reader view and Sources view render correctly with the new color tokens applied
+1. **Color system:** All text, backgrounds, and borders across all screens use the new CSS token utilities (`bg-surface`, `text-accent`, etc.) — no hardcoded hex or Tailwind color-scale values in modified files
+2. **Accent switching:** Toggle each of the 5 accent colors via ThemeSwitcher — progress bars, chapter numbers, and active states all update immediately without reload
+3. **Persistence:** Close and reopen the app — the last selected accent color is restored with no visible flash
+4. **Latest Releases:** Section appears above the library grid, showing cover + up to 3 chapters + relative timestamps per entry, capped at 10 entries
+5. **Library grid:** Existing comics display correctly with updated CoverCard styling (accent progress bar, hover scale, rounded corners)
+6. **TopNav:** Theme switcher icon is visible and the popover opens/closes correctly; search input renders with pill shape
+7. **Reader and Sources:** Audit that text, background, and border classes in both views reference color tokens, not hardcoded values
