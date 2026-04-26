@@ -82,3 +82,10 @@ describe('TopNav – settings dropdown', () => {
     expect(screen.queryByText('Reader Settings')).not.toBeInTheDocument()
   })
 })
+
+describe('TopNav – theme switcher', () => {
+  it('renders a "Change theme" button', () => {
+    render(<TopNav {...baseProps} />)
+    expect(screen.getByRole('button', { name: /change theme/i })).toBeInTheDocument()
+  })
+})
