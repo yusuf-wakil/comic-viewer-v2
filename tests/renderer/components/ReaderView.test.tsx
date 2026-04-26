@@ -5,11 +5,13 @@ import { ReaderView } from '../../../src/renderer/src/components/ReaderView'
 
 // Mock IntersectionObserver (not available in jsdom)
 beforeAll(() => {
-  global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-  }))
+  global.IntersectionObserver = vi.fn(function () {
+    return {
+      observe: vi.fn(),
+      unobserve: vi.fn(),
+      disconnect: vi.fn(),
+    }
+  }) as unknown as typeof IntersectionObserver
 })
 
 const baseProps = {
@@ -55,5 +57,23 @@ describe('ReaderView – scroll mode pill', () => {
     render(<ReaderView {...baseProps} scrollMode={false} onToggleScrollMode={onToggleScrollMode} />)
     await userEvent.click(screen.getByRole('button', { name: 'Page' }))
     expect(onToggleScrollMode).not.toHaveBeenCalled()
+  })
+})
+
+describe('ReaderView – scroll mode body', () => {
+  it('renders all page images in scroll mode', () => {
+    render(<ReaderView {...baseProps} scrollMode={true} />)
+    const images = screen.getAllByRole('img')
+    expect(images).toHaveLength(3)
+    expect(images[0]).toHaveAttribute('src', 'comic-page://a/1')
+    expect(images[1]).toHaveAttribute('src', 'comic-page://a/2')
+    expect(images[2]).toHaveAttribute('src', 'comic-page://a/3')
+  })
+
+  it('renders only current page image in page mode', () => {
+    render(<ReaderView {...baseProps} scrollMode={false} currentPage={1} />)
+    const images = screen.getAllByRole('img')
+    expect(images).toHaveLength(1)
+    expect(images[0]).toHaveAttribute('src', 'comic-page://a/2')
   })
 })
