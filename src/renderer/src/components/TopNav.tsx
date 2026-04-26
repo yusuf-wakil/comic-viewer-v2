@@ -96,7 +96,7 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
               <div className="flex bg-gray-100 rounded-md overflow-hidden text-xs">
                 <button
                   type="button"
-                  onClick={() => setScrollMode(false)}
+                  onClick={() => { setScrollMode(false); setSettingsOpen(false) }}
                   data-active={String(!scrollMode)}
                   className={`px-2.5 py-1 font-medium transition-colors ${!scrollMode ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                 >
@@ -104,7 +104,7 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
                 </button>
                 <button
                   type="button"
-                  onClick={() => setScrollMode(true)}
+                  onClick={() => { setScrollMode(true); setSettingsOpen(false) }}
                   data-active={String(scrollMode)}
                   className={`px-2.5 py-1 font-medium transition-colors ${scrollMode ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-700'}`}
                 >

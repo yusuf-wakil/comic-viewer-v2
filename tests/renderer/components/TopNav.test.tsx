@@ -46,6 +46,22 @@ describe('TopNav – settings dropdown', () => {
     expect(useReaderStore.getState().scrollMode).toBe(true)
   })
 
+  it('"Scroll" button has data-active=true when scrollMode is true', async () => {
+    act(() => useReaderStore.setState({ scrollMode: true }))
+    render(<TopNav {...baseProps} />)
+    await userEvent.click(screen.getByRole('button', { name: /settings/i }))
+    expect(screen.getByRole('button', { name: 'Scroll' })).toHaveAttribute('data-active', 'true')
+    expect(screen.getByRole('button', { name: 'Page' })).toHaveAttribute('data-active', 'false')
+  })
+
+  it('clicking Page in dropdown sets scrollMode to false', async () => {
+    act(() => useReaderStore.setState({ scrollMode: true }))
+    render(<TopNav {...baseProps} />)
+    await userEvent.click(screen.getByRole('button', { name: /settings/i }))
+    await userEvent.click(screen.getByRole('button', { name: 'Page' }))
+    expect(useReaderStore.getState().scrollMode).toBe(false)
+  })
+
   it('clicking outside closes the dropdown', async () => {
     render(
       <div>
