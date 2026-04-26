@@ -67,7 +67,7 @@ export function TopNav({ activeSection, onSectionChange, onSearch, onAddFolder }
           placeholder="Search..."
           onChange={e => onSearch(e.target.value)}
           style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
-          className="w-48 px-3 py-1.5 text-sm border border-border rounded-full bg-surface text-text placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-accent/50"
+          className="w-48 px-3 py-1.5 text-sm border border-border rounded-full bg-surface text-white placeholder:text-text-subtle focus:outline-none focus:ring-2 focus:ring-accent/50"
         />
       )}
 

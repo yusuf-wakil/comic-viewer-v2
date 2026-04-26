@@ -123,7 +123,7 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
         }}
         onClose={closeTab}
       />
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto pt-4">
 
         {/* Continue Reading */}
         {recentHistory.length > 0 && (
@@ -157,7 +157,7 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
           </div>
         )}
 
-        {recentHistory.length > 0 && <div className="border-t border-border mb-6 mx-4" />}
+        {recentHistory.length > 0 && <div className="border-t border-border mb-4 mx-4" />}
 
         {/* Your Collection */}
         <div className="px-4 pb-6">

@@ -42,7 +42,7 @@ interface MangaItem {
   hash_id?: string; id?: string; slug?: string; title: string; poster: unknown
   last_chapter?: number | string; latest_chapter?: number | string; chapter?: number | string
   rating?: number | string; score?: number | string; views?: number
-  updated_at?: number | string
+  updated_at?: number | string; chapter_updated_at?: number | string
 }
 
 function extractItems(data: unknown): MangaItem[] {
@@ -357,7 +357,7 @@ export function createComixToProvider(fetcher: Fetcher): SourceProvider {
       const data = await get<unknown>(`/api/v2/manga?q=&limit=20&sort=${apiSort}&page=${page}`)
       const items = extractItems(data)
       return items.map(m => {
-        const updatedAt = toIsoDate(m.updated_at)
+        const updatedAt = toIsoDate(m.chapter_updated_at ?? m.updated_at)
         return {
           id: m.hash_id ?? m.id ?? '',
           title: m.title,
@@ -428,7 +428,7 @@ export const comixtoProvider: SourceProvider = {
     return items.map(m => {
       const latestNum = m.last_chapter ?? m.latest_chapter ?? m.chapter
       const rating = m.rating ?? m.score
-      const updatedAt = toIsoDate(m.updated_at)
+      const updatedAt = toIsoDate(m.chapter_updated_at ?? m.updated_at)
       return {
         id: m.hash_id ?? m.id ?? '',
         title: m.title,

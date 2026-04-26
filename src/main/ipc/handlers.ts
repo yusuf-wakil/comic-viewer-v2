@@ -142,13 +142,23 @@ export function registerHandlers(): void {
 
   handle('sources:getLatestUpdates', async (_e, { sourceId }) => {
     try {
-      const results = await get(sourceId).browse(1, 'latest')
-      const updates: LatestUpdate[] = results.slice(0, 10).map(r => ({
+      // comixto's sort param is ignored by their API — all sort values return manga sorted by
+      // manga_id (creation order). We fetch 5 pages in parallel and sort by chapter_updated_at
+      // ourselves to surface genuinely recent chapters. Other sources sort correctly on page 1.
+      const numPages = sourceId === 'comixto' ? 5 : 1
+      const pages = await Promise.all(
+        Array.from({ length: numPages }, (_, i) => get(sourceId).browse(i + 1, 'latest'))
+      )
+      const all = pages.flat()
+      const withChapter = all.filter(r => r.latestChapter)
+      const sorted = [...withChapter].sort((a, b) => (b.updatedAt ?? '').localeCompare(a.updatedAt ?? ''))
+      const top = (sorted.length > 0 ? sorted : withChapter).slice(0, 10)
+      const updates: LatestUpdate[] = top.map(r => ({
         seriesId: r.id,
         title: r.title,
         coverUrl: r.coverUrl,
         recentChapters: r.latestChapter
-          ? [{ number: r.latestChapter, date: r.updatedAt ?? '' }]
+          ? [{ number: r.latestChapter.replace(/^Ch\.\s*/i, ''), date: r.updatedAt ?? '' }]
           : [],
       }))
       return { ok: true, data: updates }

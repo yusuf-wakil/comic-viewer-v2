@@ -3,6 +3,7 @@ import { useIpc } from '../hooks/useIpc'
 import { useSourcesStore } from '../store/sources'
 import { useFavoritesStore } from '../store/favorites'
 import { useHistoryStore } from '../store/history'
+import { LatestReleasesSection } from '../components/LatestReleasesSection'
 import { TopNav } from '../components/TopNav'
 import type { SourceId, SeriesDetail, ContentRating, BrowseSort } from '@shared/types/source'
 
@@ -358,24 +359,8 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
           </div>
         ) : (
           <div>
-            {/* Sort bar — only for sources that support it */}
-            {!searchQuery && activeSource !== 'yskcomics' && (
-              <div className="flex items-center gap-1 px-4 pt-3 pb-1">
-                {(['latest', 'popular', 'rating', 'new'] as BrowseSort[]).map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setBrowseSort(s)}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                      browseSort === s
-                        ? 'bg-accent text-bg'
-                        : 'bg-surface-raised text-text-muted hover:bg-surface-raised'
-                    }`}
-                  >
-                    {s === 'latest' ? 'Latest Updated' : s === 'popular' ? 'Most Popular' : s === 'rating' ? 'Top Rated' : 'Newest'}
-                  </button>
-                ))}
-              </div>
-            )}
+            {!searchQuery && <LatestReleasesSection sourceId={activeSource} onSelect={handleSelectSeries} />}
+
             {(loading && !loadingSeriesId) && (
               <div className="flex items-center justify-center h-64 text-text-subtle">Loading…</div>
             )}
