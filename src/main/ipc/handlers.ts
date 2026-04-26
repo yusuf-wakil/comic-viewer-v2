@@ -7,6 +7,7 @@ import { extractPages } from '../readers/cbz'
 import { storePages, storeLazyPages } from '../protocol/comic-page'
 import { register, get } from '../sources/index'
 import { comixtoProvider } from '../sources/comixto'
+import { yskComicsProvider } from '../sources/yskcomics'
 import { comixBrowser } from '../sources/comixto-browser'
 import type { IpcChannels } from '@shared/ipc/types'
 import type { Fetcher } from '@shared/types/source'
@@ -23,6 +24,7 @@ function handle<C extends keyof IpcChannels>(channel: C, fn: Handler<C>): void {
 export function registerHandlers(): void {
   const electronFetch: Fetcher = (url, init) => net.fetch(url, init as RequestInit) as Promise<Response>
   register(comixtoProvider)
+  register(yskComicsProvider)
 
   const db = getDb()
 
