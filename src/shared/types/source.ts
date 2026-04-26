@@ -8,6 +8,14 @@ export interface SeriesResult {
   coverUrl: string
   latestChapter?: string
   rating?: number
+  updatedAt?: string
+}
+
+export interface LatestUpdate {
+  seriesId: string
+  title: string
+  coverUrl: string
+  recentChapters: Array<{ number: string; date: string }>
 }
 
 export interface ChapterEntry {

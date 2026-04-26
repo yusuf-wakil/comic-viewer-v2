@@ -1,5 +1,5 @@
 import type { Comic, PageUrl, ReadingProgress } from '../types/comic'
-import type { SourceId, BrowseSort, SeriesResult, SeriesDetail } from '../types/source'
+import type { SourceId, BrowseSort, SeriesResult, SeriesDetail, LatestUpdate } from '../types/source'
 
 export type IpcResult<T> = { ok: true; data: T } | { ok: false; error: string }
 
@@ -19,6 +19,7 @@ export interface IpcChannels {
   'settings:set':        { req: { key: string; value: string };           res: IpcResult<void> }
   // Sources
   'sources:browse':      { req: { sourceId: SourceId; page: number; sort?: BrowseSort }; res: IpcResult<SeriesResult[]> }
+  'sources:getLatestUpdates': { req: { sourceId: SourceId };             res: IpcResult<LatestUpdate[]> }
   'sources:search':      { req: { sourceId: SourceId; query: string };    res: IpcResult<SeriesResult[]> }
   'sources:getSeries':   { req: { sourceId: SourceId; seriesId: string }; res: IpcResult<SeriesDetail> }
   'sources:openChapter': { req: { sourceId: SourceId; chapterId: string }; res: IpcResult<PageUrl[]> }
