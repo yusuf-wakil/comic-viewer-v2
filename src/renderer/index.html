@@ -2,14 +2,16 @@
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>Electron</title>
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <title>OpenComic</title>
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: comic-page: https://*.comix.to https://comix.to https://cdn.ysk-comics.com"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: comic-page: https://*.comix.to https://comix.to https://cdn.ysk-comics.com"
     />
+    <script>
+      const accent = localStorage.getItem('opencomic-accent');
+      if (accent) document.documentElement.style.setProperty('--color-accent', accent);
+    </script>
   </head>
-
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
