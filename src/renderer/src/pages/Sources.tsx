@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useIpc } from '../hooks/useIpc'
 import { useSourcesStore } from '../store/sources'
 import { useFavoritesStore } from '../store/favorites'
+import { useHistoryStore } from '../store/history'
 import { TopNav } from '../components/TopNav'
 import type { SourceId, SeriesDetail, ContentRating, BrowseSort } from '@shared/types/source'
 
@@ -52,6 +53,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
     setActiveSource, setResults, setSelectedSeries, setLoading, setError, setPendingSeriesOpen
   } = useSourcesStore()
   const { addFavorite, removeFavorite, isFavorite } = useFavoritesStore()
+  const { addHistory } = useHistoryStore()
 
   const [openingChapter, setOpeningChapter] = useState<string | null>(null)
   const [loggingIn, setLoggingIn] = useState(false)
@@ -148,6 +150,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
     try {
       const detail: SeriesDetail = await invoke('sources:getSeries', { sourceId: activeSource, seriesId })
       setSelectedSeries(detail)
+      addHistory({ id: detail.id, title: detail.title, coverUrl: detail.coverUrl, sourceId: activeSource })
     } catch (e) {
       setError(String(e))
     } finally {
