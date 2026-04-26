@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useIpc } from '../hooks/useIpc'
 import { useSourcesStore } from '../store/sources'
 import { useFavoritesStore } from '../store/favorites'
+import { useHistoryStore } from '../store/history'
+import { LatestReleasesSection } from '../components/LatestReleasesSection'
 import { TopNav } from '../components/TopNav'
 import type { SourceId, SeriesDetail, ContentRating, BrowseSort } from '@shared/types/source'
 
@@ -52,6 +54,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
     setActiveSource, setResults, setSelectedSeries, setLoading, setError, setPendingSeriesOpen
   } = useSourcesStore()
   const { addFavorite, removeFavorite, isFavorite } = useFavoritesStore()
+  const { addHistory } = useHistoryStore()
 
   const [openingChapter, setOpeningChapter] = useState<string | null>(null)
   const [loggingIn, setLoggingIn] = useState(false)
@@ -61,7 +64,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
   const [loadingMore, setLoadingMore] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
-  const [browseSort, setBrowseSort] = useState<BrowseSort>('latest')
+  const browseSort: BrowseSort = 'latest'
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reqIdRef = useRef(0)
 
@@ -148,6 +151,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
     try {
       const detail: SeriesDetail = await invoke('sources:getSeries', { sourceId: activeSource, seriesId })
       setSelectedSeries(detail)
+      addHistory({ id: detail.id, title: detail.title, coverUrl: detail.coverUrl, sourceId: activeSource })
     } catch (e) {
       setError(String(e))
     } finally {
@@ -202,7 +206,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
   const starred = selectedSeries ? isFavorite(selectedSeries.id) : false
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-bg">
       <TopNav
         activeSection={activeSection}
         onSectionChange={onSectionChange}
@@ -210,15 +214,15 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
       />
 
       {/* Source tabs */}
-      <div className="flex gap-1 px-4 pt-2 border-b border-gray-200 bg-white">
+      <div className="flex gap-1 px-4 pt-2 border-b border-border bg-surface">
         {ALL_SOURCES.map(sourceId => (
           <button
             key={sourceId}
             onClick={() => { setActiveSource(sourceId); setSelectedSeries(null) }}
             className={`px-3 py-1.5 rounded-t text-sm font-medium transition-colors border-b-2 ${
               activeSource === sourceId
-                ? 'border-gray-900 text-gray-900'
-                : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'
+                ? 'border-accent text-text'
+                : 'border-transparent text-text-subtle hover:text-text hover:bg-surface-raised'
             }`}
           >
             {SOURCE_LABELS[sourceId]}
@@ -228,13 +232,13 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
 
       {/* Per-tab search bar */}
       {!selectedSeries && (
-        <div className="px-4 py-2 bg-white border-b border-gray-100">
+        <div className="px-4 py-2 bg-surface border-b border-border">
           <input
             type="search"
             value={searchQuery}
             onChange={e => handleSearchInput(e.target.value)}
             placeholder={`Search ${SOURCE_LABELS[activeSource]}…`}
-            className="w-full max-w-sm px-3 py-1.5 text-sm border border-gray-200 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:bg-white"
+            className="w-full max-w-sm px-3 py-1.5 text-sm border border-border rounded-md bg-bg focus:outline-none focus:ring-2 focus:ring-accent/50 focus:bg-surface"
           />
         </div>
       )}
@@ -244,17 +248,17 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
           <div className="p-4">
             <button
               onClick={() => { setLoadingSeriesId(null) }}
-              className="mb-4 text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+              className="mb-4 text-sm text-text-muted hover:text-text flex items-center gap-1"
             >
               ← Back
             </button>
-            <div className="flex items-center justify-center h-48 text-gray-400">Loading series…</div>
+            <div className="flex items-center justify-center h-48 text-text-subtle">Loading series…</div>
           </div>
         ) : selectedSeries ? (
           <div className="p-4">
             <button
               onClick={() => setSelectedSeries(null)}
-              className="mb-4 text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1"
+              className="mb-4 text-sm text-text-muted hover:text-text flex items-center gap-1"
             >
               ← Back
             </button>
@@ -268,7 +272,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
               )}
               <div className="min-w-0 flex-1">
                 <div className="flex items-start gap-2 mb-1">
-                  <h2 className="text-xl font-bold text-gray-900 flex-1">{selectedSeries.title}</h2>
+                  <h2 className="text-xl font-bold text-text flex-1">{selectedSeries.title}</h2>
                   {selectedSeries.contentRating && (() => {
                     const badge = RATING_BADGE[selectedSeries.contentRating!]
                     return <span className={`flex-shrink-0 mt-1 text-xs font-semibold px-2 py-0.5 rounded ${badge.className}`}>{badge.label}</span>
@@ -276,7 +280,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                   <button
                     onClick={handleToggleFavorite}
                     title={starred ? 'Remove from starred' : 'Add to starred'}
-                    className="flex-shrink-0 mt-0.5 p-1 rounded hover:bg-gray-100 transition-colors"
+                    className="flex-shrink-0 mt-0.5 p-1 rounded hover:bg-surface-raised transition-colors"
                   >
                     <svg width="22" height="22" viewBox="0 0 24 24" fill={starred ? '#f59e0b' : 'none'} stroke={starred ? '#f59e0b' : '#9ca3af'} strokeWidth="2">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
@@ -284,33 +288,33 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                   </button>
                 </div>
                 {selectedSeries.genres.length > 0 && (
-                  <p className="text-sm text-gray-500 mb-2">{selectedSeries.genres.join(', ')}</p>
+                  <p className="text-sm text-text-subtle mb-2">{selectedSeries.genres.join(', ')}</p>
                 )}
                 {selectedSeries.description && (
-                  <p className="text-sm text-gray-700 leading-relaxed">{selectedSeries.description}</p>
+                  <p className="text-sm text-text-muted leading-relaxed">{selectedSeries.description}</p>
                 )}
               </div>
             </div>
 
             {activeSource === 'comixto' && selectedSeries.loginRequired && (
-              <div className="p-6 text-center border border-gray-200 rounded bg-white">
-                <p className="text-sm text-gray-600 mb-3">Comix.to requires an account to view chapters.</p>
+              <div className="p-6 text-center border border-border rounded bg-surface">
+                <p className="text-sm text-text-muted mb-3">Comix.to requires an account to view chapters.</p>
                 <button
                   onClick={handleLogin}
                   disabled={loggingIn}
-                  className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded hover:bg-gray-700 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium text-bg bg-accent rounded hover:opacity-90 disabled:opacity-50"
                 >
                   {loggingIn ? 'Opening browser…' : 'Log in to Comix.to'}
                 </button>
               </div>
             )}
             {activeSource === 'comixto' && !selectedSeries.loginRequired && selectedSeries.chapters.length === 0 && (
-              <div className="p-4 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded">
+              <div className="p-4 text-sm text-text-muted bg-surface-raised border border-border rounded">
                 No chapters found. Try clicking the series again, or check if this title requires a subscription.
               </div>
             )}
             {error && (
-              <div className="mb-3 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md">
+              <div className="mb-3 p-3 text-sm text-text-muted bg-surface-raised border border-border rounded-md">
                 {error}
               </div>
             )}
@@ -318,10 +322,10 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
             {/* Sort toggle */}
             {sortedChapters.length > 0 && (
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-gray-400">{sortedChapters.length} chapters</span>
+                <span className="text-xs text-text-subtle">{sortedChapters.length} chapters</span>
                 <button
                   onClick={() => setSortOrder(s => s === 'desc' ? 'asc' : 'desc')}
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+                  className="flex items-center gap-1 text-xs text-text-subtle hover:text-text px-2 py-1 rounded hover:bg-surface-raised transition-colors"
                 >
                   {sortOrder === 'desc' ? (
                     <><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 9L2 3h8L6 9z" fill="currentColor"/></svg>Latest first</>
@@ -332,21 +336,21 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
               </div>
             )}
 
-            <div className="divide-y divide-gray-100 rounded border border-gray-200 bg-white">
+            <div className="divide-y divide-border rounded border border-border bg-surface">
               {sortedChapters.map((chapter) => (
                 <button
                   key={chapter.id}
                   onClick={() => handleOpenChapter(chapter.id, chapter.title ? `Ch. ${chapter.number} — ${chapter.title}` : `Chapter ${chapter.number}`)}
                   disabled={openingChapter === chapter.id}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex justify-between items-center disabled:opacity-50"
+                  className="w-full text-left px-4 py-3 hover:bg-surface-raised transition-colors flex justify-between items-center disabled:opacity-50"
                 >
                   <div className="flex items-baseline gap-3 min-w-0">
-                    <span className="text-xs text-gray-400 tabular-nums flex-shrink-0 min-w-[3rem]">Ch.{chapter.number}</span>
-                    <span className="text-sm font-medium text-gray-900 truncate">
+                    <span className="text-xs text-text-subtle tabular-nums flex-shrink-0 min-w-[3rem]">Ch.{chapter.number}</span>
+                    <span className="text-sm font-medium text-text truncate">
                       {chapter.title || ''}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0 ml-4">
+                  <span className="text-xs text-text-subtle flex-shrink-0 ml-4">
                     {openingChapter === chapter.id ? 'Opening…' : chapter.date}
                   </span>
                 </button>
@@ -355,34 +359,18 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
           </div>
         ) : (
           <div>
-            {/* Sort bar — only for sources that support it */}
-            {!searchQuery && activeSource !== 'yskcomics' && (
-              <div className="flex items-center gap-1 px-4 pt-3 pb-1">
-                {(['latest', 'popular', 'rating', 'new'] as BrowseSort[]).map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setBrowseSort(s)}
-                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                      browseSort === s
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {s === 'latest' ? 'Latest Updated' : s === 'popular' ? 'Most Popular' : s === 'rating' ? 'Top Rated' : 'Newest'}
-                  </button>
-                ))}
-              </div>
-            )}
+            {!searchQuery && <LatestReleasesSection sourceId={activeSource} onSelect={handleSelectSeries} />}
+
             {(loading && !loadingSeriesId) && (
-              <div className="flex items-center justify-center h-64 text-gray-400">Loading…</div>
+              <div className="flex items-center justify-center h-64 text-text-subtle">Loading…</div>
             )}
             {error && (
-              <div className="mx-4 mt-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-md">
+              <div className="mx-4 mt-4 p-3 text-sm text-text-muted bg-surface-raised border border-border rounded-md">
                 {error}
               </div>
             )}
             {!loading && results.length === 0 && (
-              <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
+              <div className="flex items-center justify-center h-64 text-text-subtle text-sm">
                 {searchQuery ? 'No results found' : 'No results'}
               </div>
             )}
@@ -395,7 +383,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                       onClick={() => handleSelectSeries(series.id)}
                       className="flex flex-col items-start text-left hover:opacity-80 transition-opacity"
                     >
-                      <div className="w-full aspect-[2/3] rounded overflow-hidden bg-gray-200 mb-1.5 relative">
+                      <div className="w-full aspect-[2/3] rounded overflow-hidden bg-surface-raised mb-1.5 relative">
                         {series.coverUrl ? (
                           <img
                             src={series.coverUrl}
@@ -404,7 +392,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                             onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs p-2 leading-tight">
+                          <div className="w-full h-full flex items-center justify-center text-text-subtle text-xs p-2 leading-tight">
                             {series.title}
                           </div>
                         )}
@@ -415,7 +403,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                           </span>
                         )}
                       </div>
-                      <span className="text-xs text-gray-800 font-medium line-clamp-2 w-full leading-tight">{series.title}</span>
+                      <span className="text-xs text-text font-medium line-clamp-2 w-full leading-tight">{series.title}</span>
                       {series.rating != null && (
                         <span className="text-[10px] text-amber-600 font-medium mt-0.5">★ {series.rating.toFixed(1)}</span>
                       )}
@@ -427,7 +415,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
                     <button
                       onClick={handleLoadMore}
                       disabled={loadingMore}
-                      className="px-6 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+                      className="px-6 py-2 text-sm font-medium text-text-muted border border-border rounded-md hover:bg-surface-raised transition-colors disabled:opacity-50"
                     >
                       {loadingMore ? 'Loading…' : 'Load more'}
                     </button>

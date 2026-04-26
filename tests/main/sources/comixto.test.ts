@@ -75,4 +75,38 @@ describe('Comix.to provider', () => {
     expect(pages[0].url).toBe('https://cdn.example.com/p1.webp')
     expect(pages[0].decryptionKey).toBeUndefined()
   })
+
+  test('browse maps updated_at unix timestamp to updatedAt ISO date string', async () => {
+    const fetcher = makeFetcher({
+      '/api/v2/manga': {
+        result: [{
+          hash_id: 'abc123',
+          title: 'Test Manga',
+          poster: 'https://example.com/cover.jpg',
+          last_chapter: 42,
+          updated_at: 1700000000
+        }]
+      }
+    })
+    const provider = createComixToProvider(fetcher)
+    const results = await provider.browse(1, 'latest')
+    expect(results[0].updatedAt).toBe('2023-11-14')
+  })
+
+  test('browse handles updated_at as string integer', async () => {
+    const fetcher = makeFetcher({
+      '/api/v2/manga': {
+        result: [{
+          hash_id: 'xyz',
+          title: 'Test',
+          poster: 'https://example.com/cover.jpg',
+          last_chapter: 1,
+          updated_at: '1700000000',
+        }]
+      }
+    })
+    const provider = createComixToProvider(fetcher)
+    const results = await provider.browse(1, 'latest')
+    expect(results[0].updatedAt).toBe('2023-11-14')
+  })
 })
