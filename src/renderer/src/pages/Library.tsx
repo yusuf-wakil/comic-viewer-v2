@@ -33,7 +33,7 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
   const { tabs, activeTabId, openTab, closeTab, setActive } = useTabsStore()
   const { favorites, removeFavorite } = useFavoritesStore()
   const { history } = useHistoryStore()
-  const { activeSource, setPendingSeriesOpen } = useSourcesStore()
+  const { setPendingSeriesOpen } = useSourcesStore()
   const [collectionTab, setCollectionTab] = useState<CollectionTab>('manga')
   const [search, setSearch] = useState('')
 
@@ -126,11 +126,6 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
       />
       <div className="flex-1 overflow-y-auto">
 
-        {/* Latest Releases */}
-        <LatestReleasesSection sourceId={activeSource} />
-
-        <div className="border-t border-border my-6 mx-4" />
-
         {/* Continue Reading */}
         {recentHistory.length > 0 && (
           <div className="px-4 pb-6">
@@ -186,10 +181,15 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
             ))}
           </div>
 
-          {/* Manga / Comics tabs — favorites grid */}
+          {/* Manga / Comics tabs — latest releases + favorites grid */}
           {collectionTab !== 'local' && (
-            tabFavorites.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <>
+              <LatestReleasesSection sourceId={SOURCE_TAB_MAP[collectionTab] as 'comixto' | 'yskcomics'} />
+
+              {tabFavorites.length > 0 && <div className="border-t border-border my-4" />}
+
+              {tabFavorites.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-3">
                 <p className="text-text-subtle text-sm">
                   No {collectionTab === 'manga' ? 'manga' : 'comics'} in your collection yet.
                 </p>
@@ -236,7 +236,8 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
                   </div>
                 ))}
               </div>
-            )
+            )}
+            </>
           )}
 
           {/* Local tab */}
