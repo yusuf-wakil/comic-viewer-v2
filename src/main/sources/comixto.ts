@@ -300,6 +300,14 @@ new Promise(resolve => {
 })
 `
 
+function toIsoDate(raw: number | string | undefined | null): string | undefined {
+  if (raw == null) return undefined
+  const n = typeof raw === 'number' ? raw : Number(raw)
+  if (!isNaN(n) && n > 0) return new Date(n * 1000).toISOString().slice(0, 10)
+  if (typeof raw === 'string' && raw.length >= 10) return raw.slice(0, 10)
+  return undefined
+}
+
 function cleanTitle(raw: string | undefined | null): string {
   if (!raw) return ''
   const s = raw.trim()
@@ -348,13 +356,17 @@ export function createComixToProvider(fetcher: Fetcher): SourceProvider {
       const apiSort = sort === 'rating' ? 'top_rating' : sort === 'popular' ? 'viewed' : sort === 'new' ? 'new' : 'latest'
       const data = await get<unknown>(`/api/v2/manga?q=&limit=20&sort=${apiSort}&page=${page}`)
       const items = extractItems(data)
-      return items.map(m => ({
-        id: m.hash_id ?? m.id ?? '',
-        title: m.title,
-        coverUrl: posterUrl(m.poster),
-        latestChapter: (m.last_chapter ?? m.latest_chapter ?? m.chapter) != null ? `Ch. ${m.last_chapter ?? m.latest_chapter ?? m.chapter}` : undefined,
-        rating: (m.rating ?? m.score) != null ? parseFloat(String(m.rating ?? m.score)) : undefined,
-      })).filter(m => m.id)
+      return items.map(m => {
+        const updatedAt = toIsoDate(m.updated_at)
+        return {
+          id: m.hash_id ?? m.id ?? '',
+          title: m.title,
+          coverUrl: posterUrl(m.poster),
+          latestChapter: (m.last_chapter ?? m.latest_chapter ?? m.chapter) != null ? `Ch. ${m.last_chapter ?? m.latest_chapter ?? m.chapter}` : undefined,
+          rating: (m.rating ?? m.score) != null ? parseFloat(String(m.rating ?? m.score)) : undefined,
+          updatedAt,
+        }
+      }).filter(m => m.id)
     },
 
     async search(query: string): Promise<SeriesResult[]> {
@@ -416,12 +428,14 @@ export const comixtoProvider: SourceProvider = {
     return items.map(m => {
       const latestNum = m.last_chapter ?? m.latest_chapter ?? m.chapter
       const rating = m.rating ?? m.score
+      const updatedAt = toIsoDate(m.updated_at)
       return {
         id: m.hash_id ?? m.id ?? '',
         title: m.title,
         coverUrl: posterUrl(m.poster),
         latestChapter: latestNum != null ? `Ch. ${latestNum}` : undefined,
         rating: rating != null ? parseFloat(String(rating)) : undefined,
+        updatedAt,
       }
     }).filter(m => m.id)
   },
