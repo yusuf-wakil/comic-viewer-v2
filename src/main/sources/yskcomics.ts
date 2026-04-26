@@ -5,7 +5,7 @@ import { net } from 'electron'
 const API = 'https://api.ysk-comics.com/api/v1'
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-  'x-api-key': '123456',
+  'x-api-key': process.env.YSK_API_KEY ?? '123456',
 }
 
 async function get<T>(path: string): Promise<T> {
