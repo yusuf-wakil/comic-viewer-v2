@@ -10,7 +10,7 @@ import { comixtoProvider } from '../sources/comixto'
 import { yskComicsProvider } from '../sources/yskcomics'
 import { comixBrowser } from '../sources/comixto-browser'
 import type { IpcChannels } from '@shared/ipc/types'
-import type { Fetcher } from '@shared/types/source'
+import type { Fetcher, LatestUpdate } from '@shared/types/source'
 
 type Handler<C extends keyof IpcChannels> = (
   _event: Electron.IpcMainInvokeEvent,
@@ -135,6 +135,23 @@ export function registerHandlers(): void {
   handle('sources:browse', async (_e, { sourceId, page, sort }) => {
     try {
       return { ok: true, data: await get(sourceId).browse(page, sort) }
+    } catch (e) {
+      return { ok: false, error: String(e) }
+    }
+  })
+
+  handle('sources:getLatestUpdates', async (_e, { sourceId }) => {
+    try {
+      const results = await get(sourceId).browse(1, 'latest')
+      const updates: LatestUpdate[] = results.slice(0, 10).map(r => ({
+        seriesId: r.id,
+        title: r.title,
+        coverUrl: r.coverUrl,
+        recentChapters: r.latestChapter
+          ? [{ number: r.latestChapter, date: r.updatedAt ?? '' }]
+          : [],
+      }))
+      return { ok: true, data: updates }
     } catch (e) {
       return { ok: false, error: String(e) }
     }
