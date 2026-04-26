@@ -64,7 +64,7 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
   const [loadingMore, setLoadingMore] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc')
-  const [browseSort, setBrowseSort] = useState<BrowseSort>('latest')
+  const browseSort: BrowseSort = 'latest'
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reqIdRef = useRef(0)
 
