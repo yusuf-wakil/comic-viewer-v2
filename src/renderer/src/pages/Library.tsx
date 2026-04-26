@@ -7,6 +7,7 @@ import { useSourcesStore } from '../store/sources'
 import { CoverGrid } from '../components/CoverGrid'
 import { TopNav } from '../components/TopNav'
 import { TabBar } from '../components/TabBar'
+import { LatestReleasesSection } from '../components/LatestReleasesSection'
 import type { Comic } from '@shared/types/comic'
 
 type Section = 'library' | 'sources' | 'tracking' | 'labels'
@@ -22,7 +23,7 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
   const { comics, setComics, setLoading, setError, loading } = useLibraryStore()
   const { tabs, activeTabId, openTab, closeTab, setActive } = useTabsStore()
   const { favorites, removeFavorite } = useFavoritesStore()
-  const { setPendingSeriesOpen } = useSourcesStore()
+  const { activeSource, setPendingSeriesOpen } = useSourcesStore()
   const [search, setSearch] = useState('')
 
   useEffect(() => {
@@ -74,8 +75,10 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
     ? comics.filter(c => c.title.toLowerCase().includes(search.toLowerCase()) || c.series.toLowerCase().includes(search.toLowerCase()))
     : comics
 
+  const sectionHeading = 'text-xs font-semibold text-text-muted uppercase tracking-widest'
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="flex flex-col h-screen bg-bg">
       <TopNav
         activeSection={activeSection}
         onSectionChange={onSectionChange}
@@ -92,10 +95,16 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
         onClose={closeTab}
       />
       <div className="flex-1 overflow-y-auto">
+        {/* Latest Releases */}
+        <LatestReleasesSection sourceId={activeSource} />
+
+        {/* Divider */}
+        <div className="border-t border-border my-6 mx-4" />
+
         {/* Starred section */}
         {favorites.length > 0 && (
-          <div className="px-4 pt-4 pb-2">
-            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Starred</h2>
+          <div className="px-4 pb-2">
+            <h2 className={`${sectionHeading} mb-3`}>Starred</h2>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
               {favorites.map(fav => (
                 <div key={fav.id} className="relative group">
@@ -103,7 +112,7 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
                     onClick={() => handleOpenFavorite(fav)}
                     className="flex flex-col items-center text-center hover:opacity-80 transition-opacity w-full"
                   >
-                    <div className="w-full aspect-[2/3] rounded overflow-hidden bg-gray-200 mb-1">
+                    <div className="w-full aspect-[2/3] rounded-lg overflow-hidden bg-surface-raised mb-1">
                       {fav.coverUrl ? (
                         <img
                           src={fav.coverUrl}
@@ -112,33 +121,35 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
                           onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs p-1 leading-tight">
+                        <div className="w-full h-full flex items-center justify-center text-text-subtle text-xs p-1 leading-tight">
                           {fav.title}
                         </div>
                       )}
                     </div>
-                    <span className="text-xs text-gray-700 line-clamp-2 w-full leading-tight">{fav.title}</span>
+                    <span className="text-xs text-text-muted line-clamp-2 w-full leading-tight">{fav.title}</span>
                   </button>
-                  {/* Unstar button */}
                   <button
                     onClick={() => removeFavorite(fav.id)}
                     title="Remove from starred"
                     className="absolute top-1 right-1 w-5 h-5 bg-black/50 rounded-full items-center justify-center hidden group-hover:flex transition-all"
                   >
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="white" aria-hidden="true">
                       <path d="M2 2l6 6M8 2L2 8" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
                     </svg>
                   </button>
                 </div>
               ))}
             </div>
-            <div className="border-b border-gray-200 mt-4" />
+            <div className="border-t border-border mt-4" />
           </div>
         )}
 
-        {/* Local library */}
+        {/* Library */}
+        <div className="px-4 py-2">
+          <h2 className={`${sectionHeading} mb-3`}>Your Library</h2>
+        </div>
         {loading ? (
-          <div className="flex items-center justify-center h-64 text-gray-400">Loading...</div>
+          <div className="flex items-center justify-center h-64 text-text-subtle">Loading…</div>
         ) : (
           <CoverGrid comics={filtered} progress={{}} onOpen={handleOpen} />
         )}
