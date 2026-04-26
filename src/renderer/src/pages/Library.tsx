@@ -8,7 +8,6 @@ import { useSourcesStore } from '../store/sources'
 import { CoverGrid } from '../components/CoverGrid'
 import { TopNav } from '../components/TopNav'
 import { TabBar } from '../components/TabBar'
-import { LatestReleasesSection } from '../components/LatestReleasesSection'
 import type { Comic } from '@shared/types/comic'
 import type { SourceId } from '@shared/types/source'
 
@@ -181,14 +180,9 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
             ))}
           </div>
 
-          {/* Manga / Comics tabs — latest releases + favorites grid */}
+          {/* Manga / Comics tabs — favorites grid */}
           {collectionTab !== 'local' && (
-            <>
-              <LatestReleasesSection sourceId={SOURCE_TAB_MAP[collectionTab] as 'comixto' | 'yskcomics'} />
-
-              {tabFavorites.length > 0 && <div className="border-t border-border my-4" />}
-
-              {tabFavorites.length === 0 ? (
+            tabFavorites.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 gap-3">
                 <p className="text-text-subtle text-sm">
                   No {collectionTab === 'manga' ? 'manga' : 'comics'} in your collection yet.
@@ -236,8 +230,7 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
                   </div>
                 ))}
               </div>
-            )}
-            </>
+            )
           )}
 
           {/* Local tab */}
