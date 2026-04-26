@@ -57,7 +57,7 @@ export function ReaderView({ pageUrls, currentPage, title, onNext, onPrev, onClo
   }, [])
 
   useEffect(() => {
-    if (scrollMode) return   // ← add this line
+    if (scrollMode) return
     const el = containerRef.current
     if (!el) return
     el.addEventListener('wheel', handleWheel, { passive: false })
