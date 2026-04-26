@@ -62,6 +62,13 @@ describe('TopNav – settings dropdown', () => {
     expect(useReaderStore.getState().scrollMode).toBe(false)
   })
 
+  it('selecting a mode closes the dropdown', async () => {
+    render(<TopNav {...baseProps} />)
+    await userEvent.click(screen.getByRole('button', { name: /settings/i }))
+    await userEvent.click(screen.getByRole('button', { name: 'Scroll' }))
+    expect(screen.queryByText('Reader Settings')).not.toBeInTheDocument()
+  })
+
   it('clicking outside closes the dropdown', async () => {
     render(
       <div>
