@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useIpc } from '../hooks/useIpc'
 import { useLibraryStore } from '../store/library'
 import { useTabsStore } from '../store/tabs'
@@ -85,18 +85,20 @@ export function Library({ activeSection, onSectionChange, onOpenReader }: Props)
     onSectionChange('sources')
   }
 
-  const filtered = search
-    ? comics.filter(c =>
-        c.title.toLowerCase().includes(search.toLowerCase()) ||
-        c.series.toLowerCase().includes(search.toLowerCase())
-      )
-    : comics
+  const filtered = useMemo(() => {
+    if (!search) return comics
+    const q = search.toLowerCase()
+    return comics.filter(c =>
+      c.title.toLowerCase().includes(q) || c.series.toLowerCase().includes(q)
+    )
+  }, [search, comics])
 
   const sectionHeading = 'text-xs font-semibold text-text-muted uppercase tracking-widest'
 
-  const recentHistory = [...history]
-    .sort((a, b) => b.lastReadAt - a.lastReadAt)
-    .slice(0, 12)
+  const recentHistory = useMemo(() =>
+    [...history].sort((a, b) => b.lastReadAt - a.lastReadAt).slice(0, 12),
+    [history]
+  )
 
   const tabFavorites = favorites.filter(f => f.sourceId === SOURCE_TAB_MAP[collectionTab])
 

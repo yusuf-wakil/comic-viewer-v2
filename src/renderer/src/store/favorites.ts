@@ -20,7 +20,15 @@ export const useFavoritesStore = create<FavoritesState>()(
   persist(
     (set, get) => ({
       favorites: [],
-      addFavorite: (item) => set(s => ({ favorites: [...s.favorites.filter(f => f.id !== item.id), item] })),
+      addFavorite: (item) => set(s => {
+        const existing = s.favorites.findIndex(f => f.id === item.id)
+        if (existing !== -1) {
+          const next = [...s.favorites]
+          next[existing] = item
+          return { favorites: next }
+        }
+        return { favorites: [...s.favorites, item] }
+      }),
       removeFavorite: (id) => set(s => ({ favorites: s.favorites.filter(f => f.id !== id) })),
       isFavorite: (id) => get().favorites.some(f => f.id === id),
     }),

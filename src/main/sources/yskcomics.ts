@@ -64,18 +64,34 @@ function mapComic(m: ComicItem): SeriesResult {
 // --- Full catalog cache for client-side search ---
 
 let catalogCache: SeriesResult[] | null = null
+let catalogCacheTime = 0
 let catalogFetchPromise: Promise<SeriesResult[]> | null = null
+const CATALOG_TTL = 60 * 60 * 1000 // 1 hour
+
+function isCacheStale(): boolean {
+  return catalogCache === null || Date.now() - catalogCacheTime > CATALOG_TTL
+}
 
 function warmCatalog(): void {
-  if (!catalogCache && !catalogFetchPromise) {
-    catalogFetchPromise = buildCatalog().then(c => { catalogCache = c; return c })
+  if (isCacheStale() && !catalogFetchPromise) {
+    catalogFetchPromise = buildCatalog().then(c => {
+      catalogCache = c
+      catalogCacheTime = Date.now()
+      catalogFetchPromise = null
+      return c
+    })
   }
 }
 
 async function getFullCatalog(): Promise<SeriesResult[]> {
-  if (catalogCache) return catalogCache
+  if (!isCacheStale() && catalogCache) return catalogCache
   if (!catalogFetchPromise) {
-    catalogFetchPromise = buildCatalog().then(c => { catalogCache = c; return c })
+    catalogFetchPromise = buildCatalog().then(c => {
+      catalogCache = c
+      catalogCacheTime = Date.now()
+      catalogFetchPromise = null
+      return c
+    })
   }
   return catalogFetchPromise
 }

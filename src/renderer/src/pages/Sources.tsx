@@ -68,13 +68,16 @@ export function Sources({ activeSection, onSectionChange, onOpenReader }: Props)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const reqIdRef = useRef(0)
 
-  // Reset search and reload when switching source tabs or sort
+  // Clear pending debounce on unmount to prevent state updates on unmounted component
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current) }, [])
+
+  // Reset search and reload when switching source tabs
   useEffect(() => {
     setSearchQuery('')
     setPage(1)
     setHasMore(true)
     loadBrowse(1, false, browseSort)
-  }, [activeSource, browseSort])
+  }, [activeSource])
 
   // Handle pending series open triggered from Library starred items
   useEffect(() => {
