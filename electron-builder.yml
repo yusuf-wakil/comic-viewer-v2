@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: opencomic-v2
+appId: com.opencomic.app
+productName: OpenComic
 directories:
   buildResources: build
 files:
